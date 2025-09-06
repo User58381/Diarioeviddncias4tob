@@ -87,7 +87,7 @@
   <section class="card hero" id="panel-docente">
     <div>
       <h2>Qué pedí (por fecha)</h2>
-      <p class="hint">Consulta rápida de trabajos <b>programados</b> (desde Presets). Útil para tu planeación diaria.</p>
+      <p class="hint">Consulta rápida de trabajos <b>programados</b> (desde Presets). Para planeación diaria.</p>
     </div>
     <div class="row">
       <input type="date" id="planDate" />
@@ -103,14 +103,14 @@
         <div id="planByMat" class="list"></div>
       </div>
     </div>
-    <p class="footer-note">Nota: esto se alimenta de la pestaña <b>Presets</b>. Si cambias una fecha objetivo allí, se refleja aquí.</p>
+    <p class="footer-note">Lee solo la pestaña <b>Presets</b>. Para “Semana actual” usa lunes–viernes.</p>
   </section>
 
   <!-- Acceso por alumno -->
   <section class="card hero" id="search-card" style="margin-top:14px">
     <div>
       <h2>Buscar alumno</h2>
-      <p class="hint">Escribe el <b>nombre o ID</b> para abrir su vista. No requiere el código de familias.</p>
+      <p class="hint">Escribe el <b>nombre o ID</b> para abrir su vista (no requiere el código de familias).</p>
     </div>
     <div class="split">
       <div class="suggest">
@@ -170,7 +170,7 @@
       </div>
 
       <p class="footer-note" style="margin-top:10px">
-        Importante: esta vista es informativa para el docente. Todo se calcula <b>solo leyendo</b> las hojas.
+        Importante: vista informativa para el docente. Todo se calcula <b>solo leyendo</b> las hojas.
       </p>
     </div>
 
@@ -195,15 +195,19 @@
 </main>
 
 <script>
-/* ====== CONFIG ====== */
-const SHEET_ID = '1SWtGmXlf7WbNvUlJBDktXpDcq5OfJkHE75bH5nkxurk';
+/* ====== CONFIG (se pueden sobreescribir desde el JSON) ====== */
+let SHEET_ID = '1SWtGmXlf7WbNvUlJBDktXpDcq5OfJkHE75bH5nkxurk';
 const GIDS = { puntos:'0', asistencia:'280572348', registro:'1343140445', presets:'104702199' };
-const GROUP_LABEL = '4to A';
+let GROUP_LABEL = '4to A';
 const SCHOOL_YEAR_START = '2025-09-01';
 
-/* Enlaces opcionales de evidencias (por UID_PRESET) */
+/* JSON de evidencias (igualito al que usas) */
 const LINKS_JSON = 'data/links_4A.json';
-let LINKMAP = {};
+
+/* Estados */
+let LINKMAP = {};           // j.items
+let PRESETS_ALL = [];       // cache Presets
+let STUDENTS = [];          // [{id, nombre}] ordenados por nombre
 
 /* ====== UTIL ====== */
 const $  = s => document.querySelector(s);
@@ -223,7 +227,6 @@ function toLocalDate(value){
 }
 const isWeekend = v => { const d = toLocalDate(v); const k = d.getDay(); return k===0 || k===6; };
 
-/* Detectar columna de ID si cambia el encabezado */
 function findIDColumn(cols, rows){
   let idx = cols.findIndex(c => /^(id|matric)/i.test(String(c||'')));
   if (idx >= 0) return idx;
@@ -358,7 +361,7 @@ function parseCSV(t){
   if(cur!==''||row.length){row.push(cur);rows.push(row);} return rows;
 }
 
-/* ====== PARSERS ====== */
+/* ====== PARSERS (Registro / Presets con EvidenciaN) ====== */
 function parseRegistro(cols,rows){
   const iUID=cols.findIndex(c=>/uid[_ ]?preset/i.test(String(c)));
   const iF=cols.findIndex(c=>/^fecha$/i.test(String(c)));
@@ -385,6 +388,7 @@ function parseRegistro(cols,rows){
     };
   });
 }
+
 function parsePresets(cols,rows){
   const iUID=cols.findIndex(c=>/uid[_ ]?preset/i.test(String(c)));
   const iFO=cols.findIndex(c=>/fecha.*objetivo/i.test(String(c)));
@@ -394,11 +398,29 @@ function parsePresets(cols,rows){
   const iOri=cols.findIndex(c=>/^origen$/i.test(String(c)));
   const iPag=cols.findIndex(c=>/^p[aá]gina/i.test(String(c)));
   const iNom=cols.findIndex(c=>/nombre.*trabajo/i.test(String(c)));
-  return rows.map(r=>({uid:String((iUID>=0?r[iUID]:'')??'').trim(),
-    fechaObjetivo:String((iFO>=0?r[iFO]:'')??'').trim(), momento:String((iMom>=0?r[iMom]:'')??'').trim(),
-    materia:String((iMat>=0?r[iMat]:'')??'').trim(), numero:String((iNum>=0?r[iNum]:'')??'').trim(),
-    origen:String((iOri>=0?r[iOri]:'')??'').trim(), pagina:String((iPag>=0?r[iPag]:'')??'').trim(),
-    nombreTrabajo:String((iNom>=0?r[iNom]:'')??'').trim()})).filter(p=>p.uid);
+
+  // Evidencia1..Evidencia5 (cualquier label que comience con "Evidencia")
+  const evidIdx = [];
+  cols.forEach((c,idx)=>{
+    const s = String(c||'').trim().toLowerCase();
+    if(/^evidencia/.test(s)) evidIdx.push(idx);
+  });
+
+  return rows.map(r=>{
+    const uid = String((iUID>=0?r[iUID]:'')??'').trim();
+    const evs = evidIdx.map(i=>String(r[i]??'').trim()).filter(Boolean);
+    return {
+      uid,
+      fechaObjetivo:String((iFO>=0?r[iFO]:'')??'').trim(),
+      momento:String((iMom>=0?r[iMom]:'')??'').trim(),
+      materia:String((iMat>=0?r[iMat]:'')??'').trim(),
+      numero:String((iNum>=0?r[iNum]:'')??'').trim(),
+      origen:String((iOri>=0?r[iOri]:'')??'').trim(),
+      pagina:String((iPag>=0?r[iPag]:'')??'').trim(),
+      nombreTrabajo:String((iNom>=0?r[iNom]:'')??'').trim(),
+      evidenceUrls: evs
+    };
+  }).filter(p=>p.uid);
 }
 
 /* ====== ASISTENCIA ====== */
@@ -451,28 +473,49 @@ async function loadBlock(name){
   try{ return await fetchGViz(SHEET_ID, names[name]); }
   catch{ return await fetchCSVByGid(SHEET_ID, GIDS[name]); }
 }
+
+/* ====== LINKS: JSON igualito al tuyo (group, sheetId, updated, items) ====== */
 async function loadLinks(){
-  try{ const r=await fetch(LINKS_JSON,{cache:'no-store'}); if(r.ok){ const j=await r.json(); if(j?.items) LINKMAP=j.items; } }catch{}
+  LINKMAP = {};
+  try{
+    const r = await fetch(`${LINKS_JSON}?ts=${Date.now()}`, {cache:'no-store'});
+    if(r.ok){
+      const j = await r.json();
+      // Estructura: { group, sheetId, updated, items: { UID: { urls:[...], note? } } }
+      if (j && typeof j === 'object'){
+        if (j.group) GROUP_LABEL = String(j.group);
+        if (j.sheetId) SHEET_ID = String(j.sheetId);
+        LINKMAP = (j.items && typeof j.items === 'object') ? j.items : {};
+      }
+    }
+  }catch(e){
+    console.warn('No se pudo cargar LINKS_JSON:', e);
+  }
+  // Fallback: variable global opcional
+  if (!Object.keys(LINKMAP).length && window.__LINKS__ && typeof window.__LINKS__==='object'){
+    if (window.__LINKS__.group) GROUP_LABEL = String(window.__LINKS__.group);
+    if (window.__LINKS__.sheetId) SHEET_ID = String(window.__LINKS__.sheetId);
+    LINKMAP = window.__LINKS__.items || {};
+  }
 }
 
 /* ====== PANEL DOCENTE (Presets por fecha) ====== */
-let PRESETS_ALL = [];
 function renderPlan(dateStartISO, dateEndISO){
   const inRange = PRESETS_ALL.filter(p=>{
     const fo = normDate(p.fechaObjetivo);
     return fo && fo >= dateStartISO && fo <= dateEndISO;
   });
-  // Lista simple
   const renderItem=(t)=>{
     const mom = t.momento ? ` · ${t.momento}` : '';
     const the_fecha = t.fechaObjetivo ? ` · ${normDate(t.fechaObjetivo)}` : '';
     const nom = t.nombreTrabajo ? ` · <i>${t.nombreTrabajo}</i>` : '';
+    const kLink = linksFor(t.uid, t);
     return `<details>
-      <summary><b>${t.materia||'–'}</b> — ${t.numero||'–'} (${t.origen||'–'}${t.pagina?' · p.'+t.pagina:''})${nom}${the_fecha}${mom}</summary>
+      <summary><b>${t.materia||'–'}</b> — ${t.numero||'–'} (${t.origen||'–'}${t.pagina?' · p.'+t.pagina:''})${nom}${the_fecha}${mom}${kLink? ' ' + kLink : ''}</summary>
     </details>`;
   };
   $('#planList').innerHTML = inRange.length ? inRange.map(renderItem).join('') : '<div class="hint">Sin trabajos programados en el rango.</div>';
-  // Resumen por materia
+
   const agg=new Map();
   for(const p of inRange){
     const k=p.materia||'–';
@@ -488,7 +531,6 @@ function renderPlan(dateStartISO, dateEndISO){
 }
 
 /* ====== DIRECTORIO DE ALUMNOS ====== */
-let STUDENTS = []; // [{id, nombre}], ordenados por nombre
 function buildStudentIndexFromAsis(asis){
   const iId = findIDColumn(asis.cols, asis.rows);
   const iNom = asis.cols.findIndex(c=>/^nombre/i.test(String(c)));
@@ -529,12 +571,30 @@ function renderBarChart({faltantes,tarde,atiempo}){
   const set=(id,val)=>{ const el=$(id); el.style.setProperty('--pct',(val/max).toFixed(3)); el.querySelector('.val').textContent=val; };
   set('#bar-fal',faltantes); set('#bar-tar',tarde); set('#bar-ati',atiempo);
 }
-function linksFor(uid){
+function linksFor(uid, presetObj=null){
+  // 1) JSON (igual al otro proyecto): items[uid] => { urls:[], note? } | { url:'' }
   const rec = LINKMAP?.[uid];
-  if(!rec) return '';
-  const arr = Array.isArray(rec.urls) ? rec.urls : (rec.url?[rec.url]:[]);
-  if(!arr.length) return '';
-  return arr.map((u,i)=>`<a class="linkbtn" href="${u}" target="_blank" rel="noopener">📷 Evidencia ${arr.length>1?i+1:''}</a>`).join('');
+  let urls = [];
+  let note = '';
+
+  if (rec) {
+    urls = Array.isArray(rec.urls) ? rec.urls.filter(Boolean)
+         : (rec.url ? [rec.url] : []);
+    note = rec.note ? String(rec.note) : '';
+  }
+
+  // 2) Fallback: columnas Evidencia1..Evidencia5 en Presets
+  if ((!urls || !urls.length) && presetObj && Array.isArray(presetObj.evidenceUrls)) {
+    urls = presetObj.evidenceUrls.filter(Boolean);
+  }
+
+  if(!urls.length) return '';
+
+  const noteTxt = note ? ` (${note})` : '';
+  return urls.map((u,i)=>
+    `<a class="linkbtn" href="${u}" target="_blank" rel="noopener">
+       📷 Evidencia${urls.length>1?` ${i+1}`:''}${noteTxt}
+     </a>`).join('');
 }
 function renderLists(){
   const falt=byTri(ALL.faltantes), tar=byTri(ALL.tarde), ati=byTri(ALL.atiempo);
@@ -546,9 +606,9 @@ function renderLists(){
 
   const renderItem = (t) => {
     const mom = t.momento ? ` · ${t.momento}` : '';
-    const the_fecha = t.fechaObjetivo ? ` · ${normDate(t.fechaObjetivo)}` : '';
+       const the_fecha = t.fechaObjetivo ? ` · ${normDate(t.fechaObjetivo)}` : '';
     const nom = t.nombreTrabajo ? ` · <i>${t.nombreTrabajo}</i>` : '';
-    const kLink = linksFor(t.uid);
+    const kLink = linksFor(t.uid, t);
     return `<details>
       <summary><b>${t.materia||'–'}</b> — ${t.numero||'–'} (${t.origen||'–'}${t.pagina?' · p.'+t.pagina:''})${nom}${the_fecha}${mom}${kLink? ' ' + kLink : ''}</summary>
     </details>`;
@@ -558,166 +618,24 @@ function renderLists(){
   $('#atiempo').innerHTML   = ati.length   ? ati.map(renderItem).join('')   : '<div class="hint">Aún no hay entregas registradas</div>';
 }
 
-async function cargarAlumnoPorID(id){
-  $('#student-view').style.display='none';
-  $('#alumno-nombre').textContent='Cargando…'; $('#alumno-id').textContent='';
-
-  await loadLinks();
-  const [asis, reg, pre] = await Promise.all([loadBlock('asistencia'), loadBlock('registro'), loadBlock('presets')]);
-
-  const entregas = parseRegistro(reg.cols, reg.rows);
-  const presets  = parsePresets(pre.cols, pre.rows);
-  let entAlumno  = entregas.filter(t => norm(t.id) === norm(id));
-  const nombreDeRegistro = entAlumno.find(e => e.nombre)?.nombre || '';
-
-  const uids   = new Map(entAlumno.filter(t => t.uidPreset).map(t => [t.uidPreset, t]));
-  const claves = new Map(entAlumno.filter(t => !t.uidPreset).map(t => [
-    [norm(t.materia), norm(String(t.numero).replace(/^trabajo\s*/i,'')),
-     norm(t.origen),  norm(t.pagina), normDate(t.fechaObjetivo)].join('|'), t
-  ]));
-
-  const faltantes=[], tarde=[], atiempo=[];
-  for (const p of presets){
-    let e = uids.get(p.uid);
-    if (!e){
-      const k = [norm(p.materia), norm(String(p.numero).replace(/^trabajo\s*/i,'')),
-                 norm(p.origen),  norm(p.pagina), normDate(p.fechaObjetivo)].join('|');
-      e = claves.get(k);
-    }
-    if (e) { (e.atrasoDias > 0 ? tarde : atiempo).push(p); } else { faltantes.push(p); }
-  }
-  ALL={faltantes,tarde,atiempo,presets};
-
-  const [w0,w1] = weekRange(new Date());
-  const aw = asistenciaAlumno(asis.cols, asis.rows, {id, nombre:nombreDeRegistro}, w0, w1, {excludeWeekends:true});
-
-  const hoy = new Date();
-  const d30 = ymd(new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate()-30));
-  const start30 = (d30 < SCHOOL_YEAR_START) ? SCHOOL_YEAR_START : d30;
-
-  const iNom = asis.cols.findIndex(c=>/^nombre/i.test(String(c)));
-  let nombre = nombreDeRegistro;
-  if (aw.row && iNom>=0) nombre = String(aw.row[iNom]||'');
-  if (!nombre){
-    const iId = findIDColumn(asis.cols, asis.rows);
-    if (iId>=0 && iNom>=0){
-      const r=asis.rows.find(r=>norm(r[iId])===norm(id));
-      if (r) nombre=String(r[iNom]||'');
-    }
-  }
-  if (!nombre){ alert('No encontramos ese ID. Verifica que exista en Asistencia/Registro.'); return; }
-
-  $('#alumno-nombre').textContent = nombre;
-  $('#alumno-id').textContent     = 'ID: ' + id;
-  $('#grupo-label').innerHTML     = `<span class="badgeb">👩‍🏫 Grupo: <b>${GROUP_LABEL}</b></span>`;
-
-  const a30 = asistenciaAlumno(asis.cols, asis.rows, {id, nombre:nombre}, start30, ymd(hoy), {excludeWeekends:true});
-  const ah  = asistenciaHistorica(asis.cols, asis.rows, {id, nombre:nombre}, {excludeWeekends:true});
-
-  $('#stat-aswk').textContent   = aw.total  ? `${Math.round(aw.present/aw.total*100)}%  (${aw.present}/${aw.total})` : '–';
-  $('#stat-as30').textContent   = a30.total ? `${Math.round(a30.present/a30.total*100)}%  (${a30.present}/${a30.total})` : '–';
-  $('#stat-asHist').textContent = ah.total  ? `${Math.round(ah.present/ah.total*100)}%  (${ah.present}/${ah.total})` : '–';
-  $('#stat-faltHist').textContent = ah.total ? `${ah.total - ah.present}` : '–';
-
-  TRI='ALL'; setTriChips(); renderLists();
-
-  $('#student-view').style.display='block';
-  window.scrollTo({top:document.body.offsetTop, behavior:'smooth'});
-}
-
 /* ====== UI ====== */
 const themeBtn=$('#themeBtn');
 function applyTheme(t){document.documentElement.setAttribute('data-theme', t); themeBtn.textContent=(t==='dark'?'☀️ Claro':'🌙 Oscuro'); localStorage.setItem('docente_theme',t);}
 applyTheme(localStorage.getItem('docente_theme')||'light');
 themeBtn.onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
 
-/* Abrir hojas rápido */
-const openPresetsURL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${GIDS.presets}`;
-const openRegistroURL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${GIDS.registro}`;
-$('#openPresets').href = openPresetsURL;
-$('#openRegistro').href = openRegistroURL;
-
-/* Guardar último alumno */
-$('#saveBtn').onclick=()=>{const v=($('#searchInput').value||'').trim(); if(!v){alert('Escribe nombre o ID.'); return;} localStorage.setItem('docente_last',v); alert('Guardado.'); };
-
-/* Sugerencias y búsqueda */
-let SG_VISIBLE=false;
-function hideSG(){ SG_VISIBLE=false; $('#sgBox').style.display='none'; }
-function showSG(items){
-  const box=$('#sgBox');
-  box.innerHTML = items.map((s,i)=>`<div class="sg-item" data-id="${s.id}">
-      <span>${s.nombre}</span><span class="tag">${s.id}</span></div>`).join('');
-  box.querySelectorAll('.sg-item').forEach(el=>{
-    el.onclick=()=>{ $('#searchInput').value = `${el.children[0].textContent}`; openStudentById(el.getAttribute('data-id')); hideSG(); };
-  });
-  SG_VISIBLE=true; box.style.display='block';
-}
-function filterSG(q){
-  const t=norm(q);
-  if(t.length<2){ hideSG(); return; }
-  // match por nombre o por ID aproximado
-  const best = STUDENTS.filter(s => norm(s.nombre).includes(t) || norm(s.id).includes(t)).slice(0,10);
-  if(!best.length){ hideSG(); return; }
-  showSG(best);
-}
-$('#searchInput').addEventListener('input', e=>filterSG(e.target.value));
-document.addEventListener('click', e=>{ if(!$('#sgBox').contains(e.target) && e.target!==$('#searchInput')) hideSG(); });
-
-/* Abrir por texto (nombre o ID) */
-$('#openBtn').onclick=()=>{
-  const q=($('#searchInput').value||'').trim();
-  if(!q){ alert('Escribe nombre o ID.'); return; }
-  // Si parece ID válido, abre directo
-  const m=q.toUpperCase().match(/^ID[A-Z0-9]{6,}$/);
-  if(m){ openStudentById(m[0]); return; }
-  // Si es nombre, busca match exacto o primero parcial
-  const t=norm(q);
-  let hit = STUDENTS.find(s => norm(s.nombre)===t);
-  if(!hit) hit = STUDENTS.find(s => norm(s.nombre).includes(t));
-  if(!hit){ alert('No hallé ese alumno. Prueba con otra parte del nombre o pega el ID.'); return; }
-  openStudentById(hit.id);
-};
-
-/* Lista completa */
-$('#listAllBtn').onclick=()=>{
-  const el=$('#allList');
-  el.style.display = (el.style.display==='none' || !el.style.display) ? 'block' : 'none';
-};
-
-/* Navegación anterior / siguiente */
-function openStudentByIndex(i){
-  if(i<0||i>=STUDENTS.length) return;
-  CURRENT_INDEX=i;
-  const s=STUDENTS[i];
-  $('#searchInput').value=s.nombre;
-  localStorage.setItem('docente_last', s.nombre);
-  openStudentById(s.id);
-}
-function openStudentById(id){
-  const i = STUDENTS.findIndex(s=>s.id===id);
-  if(i>=0) CURRENT_INDEX=i;
-  cargarAlumnoPorID(id);
-}
-$('#prevBtn').onclick=()=>{ if(CURRENT_INDEX<=0) return; openStudentByIndex(CURRENT_INDEX-1); };
-$('#nextBtn').onclick=()=>{ if(CURRENT_INDEX<0 || CURRENT_INDEX>=STUDENTS.length-1) return; openStudentByIndex(CURRENT_INDEX+1); };
-$('#backBtn')?.addEventListener('click',()=>{ $('#student-view').style.display='none'; window.scrollTo({top:0,behavior:'smooth'}); });
-
-/* ====== PLAN CHIPS ====== */
-function setPlanChips(mode){
-  const host=$('#planChips');
-  const opts=[['HOY','Hoy'],['SEM','Semana actual']];
-  host.innerHTML=opts.map(([v,l])=>`<button class="chip ${mode===v?'active':''}" data-v="${v}">${l}</button>`).join('');
-  for(const b of host.querySelectorAll('.chip')) b.onclick=()=>{
-    const v=b.getAttribute('data-v');
-    if(v==='HOY'){ $('#planDate').value = ymd(new Date()); renderPlan(ymd(new Date()), ymd(new Date())); }
-    else { const [a,b] = weekRange(new Date()); $('#planDate').value=a; renderPlan(a,b); }
-    setPlanChips(v);
-  };
-}
-
 /* ====== STARTUP ====== */
-(async function init(){
-  // Presets para panel docente
+async function init(){
+  // 1) Cargar JSON primero para tomar sheetId/group e items
+  await loadLinks();
+
+  // 2) Enlaces rápidos a hojas (después del JSON por si cambió SHEET_ID)
+  const openPresetsURL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${GIDS.presets}`;
+  const openRegistroURL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${GIDS.registro}`;
+  $('#openPresets').href = openPresetsURL;
+  $('#openRegistro').href = openRegistroURL;
+
+  // 3) Cargar Presets (panel docente)
   try{
     const pre = await loadBlock('presets');
     PRESETS_ALL = parsePresets(pre.cols, pre.rows);
@@ -727,24 +645,105 @@ function setPlanChips(mode){
     renderPlan(todayISO, todayISO);
   }catch(e){ console.warn('No se pudo cargar Presets para panel docente', e); }
 
-  // Directorio de alumnos desde Asistencia
+  // 4) Directorio de alumnos desde Asistencia
   try{
     const asis = await loadBlock('asistencia');
     STUDENTS = buildStudentIndexFromAsis(asis);
     renderAllList();
   }catch(e){ console.error('No se pudo construir directorio de alumnos', e); }
 
-  // Cambios de fecha en panel docente
+  // 5) Cambios de fecha en panel docente
   $('#planDate').addEventListener('change', e=>{
     const d = e.target.value || ymd(new Date());
     renderPlan(d, d);
     setPlanChips('HOY');
   });
 
-  // Atajos
+  // 6) Guardar último término de búsqueda
+  $('#saveBtn').onclick=()=>{const v=($('#searchInput').value||'').trim(); if(!v){alert('Escribe nombre o ID.'); return;} localStorage.setItem('docente_last',v); alert('Guardado.'); };
+
+  // 7) Sugerencias
+  let SG_VISIBLE=false;
+  function hideSG(){ SG_VISIBLE=false; $('#sgBox').style.display='none'; }
+  function showSG(items){
+    const box=$('#sgBox');
+    box.innerHTML = items.map((s)=>`<div class="sg-item" data-id="${s.id}">
+        <span>${s.nombre}</span><span class="tag">${s.id}</span></div>`).join('');
+    box.querySelectorAll('.sg-item').forEach(el=>{
+      el.onclick=()=>{ $('#searchInput').value = `${el.children[0].textContent}`; openStudentById(el.getAttribute('data-id')); hideSG(); };
+    });
+    SG_VISIBLE=true; box.style.display='block';
+  }
+  function filterSG(q){
+    const t=norm(q);
+    if(t.length<2){ hideSG(); return; }
+    const best = STUDENTS.filter(s => norm(s.nombre).includes(t) || norm(s.id).includes(t)).slice(0,10);
+    if(!best.length){ hideSG(); return; }
+    showSG(best);
+  }
+  $('#searchInput').addEventListener('input', e=>filterSG(e.target.value));
+  document.addEventListener('click', e=>{ if(!$('#sgBox').contains(e.target) && e.target!==$('#searchInput')) hideSG(); });
+
+  // 8) Abrir por texto (nombre o ID)
+  $('#openBtn').onclick=()=>{
+    const q=($('#searchInput').value||'').trim();
+    if(!q){ alert('Escribe nombre o ID.'); return; }
+    const m=q.toUpperCase().match(/^ID[A-Z0-9]{6,}$/);
+    if(m){ openStudentById(m[0]); return; }
+    const t=norm(q);
+    let hit = STUDENTS.find(s => norm(s.nombre)===t);
+    if(!hit) hit = STUDENTS.find(s => norm(s.nombre).includes(t));
+    if(!hit){ alert('No hallé ese alumno. Prueba otra parte del nombre o pega el ID.'); return; }
+    openStudentById(hit.id);
+  };
+
+  // 9) Lista completa
+  $('#listAllBtn').onclick=()=>{
+    const el=$('#allList');
+    el.style.display = (el.style.display==='none' || !el.style.display) ? 'block' : 'none';
+  };
+
+  // 10) Navegación prev/next
+  window.CURRENT_INDEX=-1;
+  window.openStudentByIndex=function(i){
+    if(i<0||i>=STUDENTS.length) return;
+    window.CURRENT_INDEX=i;
+    const s=STUDENTS[i];
+    $('#searchInput').value=s.nombre;
+    localStorage.setItem('docente_last', s.nombre);
+    openStudentById(s.id);
+  }
+  window.openStudentById=function(id){
+    const i = STUDENTS.findIndex(s=>s.id===id);
+    if(i>=0) window.CURRENT_INDEX=i;
+    cargarAlumnoPorID(id);
+  }
+  $('#prevBtn').onclick=()=>{ if(window.CURRENT_INDEX<=0) return; openStudentByIndex(window.CURRENT_INDEX-1); };
+  $('#nextBtn').onclick=()=>{ if(window.CURRENT_INDEX<0 || window.CURRENT_INDEX>=STUDENTS.length-1) return; openStudentByIndex(window.CURRENT_INDEX+1); };
+  $('#backBtn')?.addEventListener('click',()=>{ $('#student-view').style.display='none'; window.scrollTo({top:0,behavior:'smooth'}); });
+
+  // 11) Chips panel docente
+  window.setPlanChips=function(mode){
+    const host=$('#planChips');
+    const opts=[['HOY','Hoy'],['SEM','Semana actual']];
+    host.innerHTML=opts.map(([v,l])=>`<button class="chip ${mode===v?'active':''}" data-v="${v}">${l}</button>`).join('');
+    for(const b of host.querySelectorAll('.chip')) b.onclick=()=>{
+      const v=b.getAttribute('data-v');
+      if(v==='HOY'){ $('#planDate').value = ymd(new Date()); renderPlan(ymd(new Date()), ymd(new Date())); }
+      else { const [a,b] = weekRange(new Date()); $('#planDate').value=a; renderPlan(a,b); }
+      setPlanChips(v);
+    };
+  }
+
+  // 12) Pintar etiqueta de grupo (desde JSON si vino)
+  $('#grupo-label').innerHTML = `<span class="badgeb">👩‍🏫 Grupo: <b>${GROUP_LABEL}</b></span>`;
+
+  // 13) Rellena búsqueda con último guardado
   const last = localStorage.getItem('docente_last');
   if(last) $('#searchInput').value = last;
-})();
+}
+
+init();
 </script>
 </body>
 </html>
