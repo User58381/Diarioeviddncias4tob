@@ -1,126 +1,750 @@
-<!DOCTYPE html>
-<html lang="es">
+<!doctype html>
+<html lang="es" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canjeo de Estampas</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap');
-        body {
-            font-family: 'Comic Neue', cursive;
-            text-align: center;
-            background: url('./imagenes/fondo.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-        }
-        .sticker {
-            display: inline-block;
-            margin: 20px;
-            padding: 10px;
-            border-radius: 10px;
-            text-align: center;
-            position: relative;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 15px;
-            animation: glowEffect 2s infinite alternate;
-        }
-        .sticker img {
-            width: 120px;
-            height: 120px;
-            border-radius: 10px;
-            animation: stickerGlow 1.5s infinite alternate;
-        }
-        .sticker button {
-            margin-top: 10px;
-            padding: 5px 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .raro { border: 4px solid blue; background-color: #d0e1ff; }
-        .epico { border: 4px solid purple; background-color: #e1c0ff; }
-        .legendario { border: 4px solid orange; background-color: #ffdbac; }
-        .mitico { border: 4px solid red; background-color: #ffc0c0; }
-        .exclusivo { border: 4px solid gold; background-color: #fff7c0; }
-        .superexclusivo { border: 4px solid black; background-color: #ffcc00; animation: superGlow 1.5s infinite alternate; }
-
-        @keyframes glowEffect {
-            0% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
-            100% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.8); }
-        }
-
-        @keyframes stickerGlow {
-            0% { filter: brightness(1); }
-            100% { filter: brightness(1.5); }
-        }
-        
-        @keyframes superGlow {
-            0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-            100% { box-shadow: 0 0 30px rgba(255, 215, 0, 1); }
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aula Digital — Diario docente</title>
+<style>
+  :root{
+    --bg:#f7f9ff; --card:#ffffff; --text:#0b1020; --muted:#526072; --accent:#2b6bff;
+    --bd:#d9e3ff; --ok:#0ea371; --warn:#f0b429; --bad:#ef4444;
+    --barbg: color-mix(in oklab, var(--card) 80%, transparent);
+  }
+  [data-theme="dark"]{
+    --bg:#0c1220; --card:#101a34; --text:#eaf3ff; --muted:#93a6bc; --accent:#6aa9ff;
+    --bd:#223056; --ok:#1ec48d; --warn:#ffce3a; --bad:#ff7a7a; --barbg:#0a1330;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial;background:var(--bg);color:var(--text)}
+  header{position:sticky;top:0;z-index:10;background:color-mix(in oklab,var(--card) 90%,transparent);
+    backdrop-filter:blur(6px);border-bottom:1px solid var(--bd);padding:14px 16px;display:flex;gap:12px;align-items:center}
+  header h1{font-size:18px;margin:0}
+  header .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;touch-action:manipulation}
+  .btn.primary{background:var(--accent);color:white}
+  .btn.ghost{background:transparent;border:1px solid var(--bd);color:var(--text)}
+  .btn.small{padding:8px 10px;border-radius:10px}
+  main{max-width:1100px;margin:auto;padding:18px}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px}
+  .hero{display:grid;gap:12px}
+  .input{display:grid;grid-template-columns:1fr auto auto;gap:8px}
+  @media (max-width:720px){.input{grid-template-columns:1fr}}
+  .input input{padding:14px 16px;border:1px solid var(--bd);border-radius:12px;background:white;font-size:16px}
+  [data-theme="dark"] .input input{background:#0d152b;color:var(--text)}
+  .hint{color:var(--muted);font-size:13px}
+  h2{margin:8px 0 6px 0}
+  h3{margin:10px 0 8px 0}
+  .grid2{display:grid;grid-template-columns:1fr;gap:12px}
+  @media (min-width:920px){.grid2{grid-template-columns:1fr 1fr}}
+  .grid3{display:grid;grid-template-columns:1fr;gap:12px}
+  @media (min-width:920px){.grid3{grid-template-columns:1.2fr 1fr 1fr}}
+  .list{display:grid;gap:8px}
+  details{border:1px solid var(--bd);border-radius:12px;padding:8px 10px;background:color-mix(in oklab,var(--card) 94%,transparent)}
+  summary{cursor:pointer;font-weight:700}
+  .stat{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:640px){.stat{grid-template-columns:1fr}}
+  .k{color:var(--muted);font-size:14px}
+  .v{font-weight:900;font-size:20px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .chip{border:1px solid var(--bd);background:transparent;border-radius:999px;padding:10px 14px;font-weight:700;cursor:pointer}
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .topbar{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .badgeb{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--bd);border-radius:999px;padding:6px 10px;font-size:12px}
+  .footer-note{margin-top:12px;font-size:12px;color:var(--muted)}
+  .chart{display:grid;gap:10px;margin-top:14px}
+  .bar{position:relative;border-radius:12px;border:1px solid var(--bd);background:var(--barbg);height:44px;display:flex;align-items:center;overflow:hidden}
+  .bar::before{content:"";position:absolute;inset:0;transform-origin:left center;transform:scaleX(var(--pct,0))}
+  .bar.fal::before{background:linear-gradient(90deg,var(--bad),#ff9b9b)}
+  .bar.tar::before{background:linear-gradient(90deg,var(--warn),#ffe08a)}
+  .bar.ati::before{background:linear-gradient(90deg,var(--ok),#a7efd5)}
+  .bar .lbl{position:relative;z-index:1;padding-left:12px;font-weight:800}
+  .bar .val{position:absolute;right:10px;z-index:1;font-weight:900}
+  .linkbtn{display:inline-block;margin-left:8px;border:1px solid var(--bd);padding:4px 8px;border-radius:999px;font-size:12px;text-decoration:none}
+  /* Sugerencias */
+  .suggest{position:relative}
+  .suggest-list{position:absolute;z-index:15;left:0;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);max-height:300px;overflow:auto}
+  .sg-item{padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+  .sg-item:hover{background:color-mix(in oklab,var(--card) 85%,transparent)}
+  .tag{font-size:12px;border:1px solid var(--bd);border-radius:999px;padding:2px 8px;color:var(--muted)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .split{display:grid;grid-template-columns:1fr;gap:12px}
+  @media (min-width:920px){.split{grid-template-columns:1.2fr .8fr}}
+  .soft{background:color-mix(in oklab,var(--card) 93%,transparent);border:1px dashed var(--bd)}
+</style>
 </head>
 <body>
-    <h1>Canjeo de Estampas</h1>
-    <h2>Estampas del Día</h2>
-    <div id="stickerContainer"></div>
-    <script>
-        function obtenerEstampasDelDia() {
-            return [
-                { id: 1, nombre: "Taco Feliz", costo: 800, img: "./imagenes/taco_feliz.jpeg", rareza: "raro" },
-                { id: 2, nombre: "Pollito Amarillo", costo: 900, img: "./imagenes/pollito_amarillo.png", rareza: "epico" },
-                { id: 3, nombre: "Huevo Tierno", costo: 1000, img: "./imagenes/huevo_tierno.png", rareza: "legendario" },
-                { id: 4, nombre: "Gato Fresa", costo: 1100, img: "./imagenes/gato_fresa.png", rareza: "mitico" },
-                { id: 5, nombre: "Capibara Estrella", costo: 1200, img: "./imagenes/capibara_estrella.jpg", rareza: "exclusivo" },
-                { id: 6, nombre: "Aguacate Kawaii", costo: 1300, img: "./imagenes/aguacate_kawaii.jpg", rareza: "superexclusivo" }
-            ];
-        }
+<header>
+  <h1>📘 Aula Digital — Diario docente</h1>
+  <div class="right">
+    <a id="openPresets" class="btn ghost small" target="_blank" rel="noopener">Abrir “Presets”</a>
+    <a id="openRegistro" class="btn ghost small" target="_blank" rel="noopener">Abrir “Registro”</a>
+    <button id="themeBtn" class="btn ghost small" title="Cambiar tema">🌙 Oscuro</button>
+  </div>
+</header>
 
-        function renderStickers() {
-            const container = document.getElementById("stickerContainer");
-            container.innerHTML = "";
-            let stickers = obtenerEstampasDelDia();
-            stickers.forEach(sticker => {
-                let div = document.createElement("div");
-                div.className = `sticker ${sticker.rareza}`;
-                div.innerHTML = `
-                    <img src="${sticker.img}" alt="${sticker.nombre}"><br>
-                    <strong>${sticker.nombre}</strong><br>
-                    <span style="font-size: 18px; color: black;">${sticker.rareza.toUpperCase()}</span><br>
-                    Costo: ${sticker.costo} puntos<br>
-                    <button onclick="canjear('${sticker.img}', ${sticker.costo})">Canjear</button>
-                `;
-                container.appendChild(div);
-            });
-        }
+<main>
+  <!-- Panel Docente: Qué pedí -->
+  <section class="card hero" id="panel-docente">
+    <div>
+      <h2>Qué pedí (por fecha)</h2>
+      <p class="hint">Consulta rápida de trabajos <b>programados</b> (desde Presets). Útil para tu planeación diaria.</p>
+    </div>
+    <div class="row">
+      <input type="date" id="planDate" />
+      <div class="chips" id="planChips"></div>
+    </div>
+    <div class="grid2">
+      <div class="card soft">
+        <h3>📅 Programados en el rango</h3>
+        <div id="planList" class="list"></div>
+      </div>
+      <div class="card soft">
+        <h3>📚 Resumen por materia</h3>
+        <div id="planByMat" class="list"></div>
+      </div>
+    </div>
+    <p class="footer-note">Nota: esto se alimenta de la pestaña <b>Presets</b>. Si cambias una fecha objetivo allí, se refleja aquí.</p>
+  </section>
 
-        function canjear(imagen, costo) {
-            let cantidadPuntos = prompt(`Ingrese la cantidad de puntos para canjear esta estampa (Costo: ${costo} puntos):`);
-            if (cantidadPuntos !== null && !isNaN(cantidadPuntos) && cantidadPuntos.trim() !== "") {
-                cantidadPuntos = parseInt(cantidadPuntos);
-                if (cantidadPuntos >= costo) {
-                    imprimir(imagen);
-                } else {
-                    alert(`Necesitas al menos ${costo} puntos para canjear esta estampa.`);
-                }
-            } else {
-                alert("Entrada no válida. Intente nuevamente.");
-            }
-        }
+  <!-- Acceso por alumno -->
+  <section class="card hero" id="search-card" style="margin-top:14px">
+    <div>
+      <h2>Buscar alumno</h2>
+      <p class="hint">Escribe el <b>nombre o ID</b> para abrir su vista. No requiere el código de familias.</p>
+    </div>
+    <div class="split">
+      <div class="suggest">
+        <div class="input">
+          <input id="searchInput" autocomplete="off" placeholder="Ej.: MARTINEZ HERNANDEZ DYLAN… o ID07ABC123" inputmode="latin-name">
+          <button id="openBtn" class="btn primary">Abrir</button>
+          <button id="saveBtn" class="btn ghost">Recordar último</button>
+        </div>
+        <div id="sgBox" class="suggest-list" style="display:none"></div>
+        <div class="hint">Tip: con 2+ letras comienzan a salir sugerencias. También puedes pegar el ID.</div>
+      </div>
+      <div class="card soft">
+        <div class="row">
+          <button id="listAllBtn" class="btn ghost small">Ver lista completa</button>
+          <div class="hint">— total: <b id="stdCount">0</b></div>
+        </div>
+        <div id="allList" class="list" style="max-height:260px;overflow:auto;margin-top:8px;display:none"></div>
+      </div>
+    </div>
+  </section>
 
-        function imprimir(imagen) {
-            let ventana = window.open("", "_blank");
-            ventana.document.write("<html><head><title>Impresión de Estampas</title><style>");
-            ventana.document.write("@page { size: landscape; margin: 0; }"); // Ajuste para modo horizontal
-            ventana.document.write("body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }");
-            ventana.document.write("img { width: 100%; height: auto; max-height: 100vh; }");
-            ventana.document.write("</style></head><body>");
-            ventana.document.write(`<img src="${imagen}">`);
-            ventana.document.write("</body></html>");
-            ventana.document.close();
-            setTimeout(() => { ventana.print(); ventana.close(); }, 500);
-        }
+  <!-- Vista alumno -->
+  <section id="student-view" style="display:none; margin-top:14px">
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h2 id="alumno-nombre">Alumno</h2>
+          <div class="hint" id="alumno-id"></div>
+          <div class="hint" id="grupo-label" style="margin-top:4px"></div>
+          <div id="tri-subtitle" class="hint" style="margin-top:6px">Resumen de Todo</div>
+        </div>
+        <div class="row">
+          <button id="prevBtn" class="btn ghost small" title="Alumno anterior">◀</button>
+          <button id="nextBtn" class="btn ghost small" title="Siguiente alumno">▶</button>
+          <button id="backBtn" class="btn ghost">Cambiar de alumno</button>
+        </div>
+      </div>
 
-        renderStickers();
-    </script>
+      <div style="margin-top:10px">
+        <div class="chips" id="tri-chips"></div>
+        <div class="hint">Filtro: <b>Todo</b> o trimestres <b>M1/M2/M3</b>.</div>
+      </div>
+
+      <div class="stat" style="margin-top:12px">
+        <div><div class="k">Cumplimiento (trimestre)</div><div class="v" id="stat-cump-tri">–</div></div>
+        <div><div class="k">Totales — Trimestre</div><div class="v" id="stat-tot-tri">–</div></div>
+        <div><div class="k">Asistencia — semana</div><div class="v" id="stat-aswk">–</div></div>
+        <div><div class="k">Asistencia — 30 días</div><div class="v" id="stat-as30">–</div></div>
+        <div><div class="k">Asistencia total (histórica)</div><div class="v" id="stat-asHist">–</div></div>
+        <div><div class="k">Faltas (históricas)</div><div class="v" id="stat-faltHist">–</div></div>
+      </div>
+
+      <div class="chart" aria-label="Resumen visual del trimestre">
+        <div class="bar fal" id="bar-fal"><span class="lbl">⏳ Faltantes</span><span class="val" id="val-fal">0</span></div>
+        <div class="bar tar" id="bar-tar"><span class="lbl">🕒 Tarde</span><span class="val" id="val-tar">0</span></div>
+        <div class="bar ati" id="bar-ati"><span class="lbl">✅ A tiempo</span><span class="val" id="val-ati">0</span></div>
+      </div>
+
+      <p class="footer-note" style="margin-top:10px">
+        Importante: esta vista es informativa para el docente. Todo se calcula <b>solo leyendo</b> las hojas.
+      </p>
+    </div>
+
+    <div class="grid2" style="margin-top:12px">
+      <div class="card">
+        <h3>⏳ Trabajos faltantes</h3>
+        <div id="faltantes" class="list"></div>
+      </div>
+      <div class="card">
+        <h3>🕒 Entregados tarde</h3>
+        <div id="tarde" class="list"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h3>✅ Entregados (a tiempo)</h3>
+      <div id="atiempo" class="list"></div>
+    </div>
+
+    <p class="footer-note">Si algo no cuadra, revisa encabezados y formatos de “Asistencia”, “Registro de trabajos” y “Presets”.</p>
+  </section>
+</main>
+
+<script>
+/* ====== CONFIG ====== */
+const SHEET_ID = '1SWtGmXlf7WbNvUlJBDktXpDcq5OfJkHE75bH5nkxurk';
+const GIDS = { puntos:'0', asistencia:'280572348', registro:'1343140445', presets:'104702199' };
+const GROUP_LABEL = '4to A';
+const SCHOOL_YEAR_START = '2025-09-01';
+
+/* Enlaces opcionales de evidencias (por UID_PRESET) */
+const LINKS_JSON = 'data/links_4A.json';
+let LINKMAP = {};
+
+/* ====== UTIL ====== */
+const $  = s => document.querySelector(s);
+const strip = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const norm  = s => strip(String(s||'').toLowerCase()).replace(/\s+/g,' ').trim();
+const pad   = n => String(n).padStart(2,'0');
+const ymd   = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const TODAY = new Date();
+const MONTHS_ES = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,sept:8,oct:9,nov:10,dic:11};
+
+function toLocalDate(value){
+  if (value instanceof Date) return value;
+  const s = String(value||'').trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  return new Date(s);
+}
+const isWeekend = v => { const d = toLocalDate(v); const k = d.getDay(); return k===0 || k===6; };
+
+/* Detectar columna de ID si cambia el encabezado */
+function findIDColumn(cols, rows){
+  let idx = cols.findIndex(c => /^(id|matric)/i.test(String(c||'')));
+  if (idx >= 0) return idx;
+  let best=-1, bestOk=-1;
+  for (let i=0;i<cols.length;i++){
+    let ok=0, tot=0;
+    for (let r=0;r<Math.min(rows.length,50);r++){
+      const v = String(rows[r]?.[i] ?? '').trim();
+      if (!v) continue; tot++; if (/^ID[A-Z0-9]{6,}$/i.test(v)) ok++;
+    }
+    if (tot && ok/tot>=0.5) return i;
+    if (ok>bestOk){bestOk=ok;best=i;}
+  }
+  return best;
+}
+
+function excelSerialToDate(n){
+  const baseUTC = new Date(Date.UTC(1899,11,30));
+  const dUTC = new Date(baseUTC.getTime() + Math.round(Number(n))*86400000);
+  return new Date(dUTC.getFullYear(), dUTC.getMonth(), dUTC.getDate());
+}
+function normDate(s){
+  const t = String(s??'').trim();
+  if(!t) return '';
+  if (/^\d+(\.\d+)?$/.test(t)){
+    const n = +t; if (n >= 35000 && n <= 80000){ const d = excelSerialToDate(n); return ymd(d); }
+  }
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T].*)?$/.exec(t);
+  if (m){ const d = new Date(+m[1], +m[2]-1, +m[3]); return isNaN(+d)?'':ymd(d); }
+  m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/.exec(t);
+  if (m){
+    const a = new Date(+m[3], +m[2]-1, +m[1]);
+    const b = new Date(+m[3], +m[1]-1, +m[2]);
+    const d = (!isNaN(+a) && !isNaN(+b))
+      ? (Math.abs(+a - +TODAY) <= Math.abs(+b - +TODAY) ? a : b)
+      : (!isNaN(+a)) ? a : (!isNaN(+b)) ? b : null;
+    return d ? ymd(d) : '';
+  }
+  m = /^(\d{1,2})[\s\-\/]([A-Za-záéíóúñ]+)[\s\-\/](\d{4})$/i.exec(t);
+  if (m){
+    const k = m[2].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const key = k.startsWith('sept') ? 'sept' : k.slice(0,3);
+    const mi = MONTHS_ES[key];
+    if (mi!=null){ const d = new Date(+m[3], mi, +m[1]); return isNaN(+d)?'':ymd(d); }
+  }
+  const d = new Date(t);
+  return isNaN(+d) ? '' : ymd(d);
+}
+
+function isPresent(v){
+  const s = norm(v);
+  if(!s) return false;
+  if(!Number.isNaN(+s)) return (+s) > 0;
+  const s2 = s.replace(/\s+/g,'');
+  if(/^1\(100%?\)$/.test(s2)) return true;
+  return ['x','✓','✔','p','presente','si','sí','s','ok','true','asistio','asistió'].includes(s);
+}
+
+function parseHeaderDateLabel(lbl){
+  if (typeof lbl === 'number' && isFinite(lbl)){
+    if (lbl >= 35000 && lbl <= 80000){ const d = excelSerialToDate(lbl); return { iso: ymd(d), date: d }; }
+  }
+  const r = String(lbl??'').trim();
+  if (!r) return null;
+  if (/^\d+(\.\d+)?$/.test(r)){
+    const n = +r; if (n >= 35000 && n <= 80000){ const d = excelSerialToDate(n); return { iso: ymd(d), date: d }; }
+  }
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T].*)?$/.exec(r);
+  if (m){ const d = new Date(+m[1], +m[2]-1, +m[3]); if (!isNaN(+d)) return { iso: ymd(d), date: d }; }
+  m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/.exec(r);
+  if (m){
+    const a = new Date(+m[3], +m[2]-1, +m[1]);
+    const b = new Date(+m[3], +m[1]-1, +m[2]);
+    const d = (!isNaN(+a) && !isNaN(+b))
+      ? (Math.abs(+a - +TODAY) <= Math.abs(+b - +TODAY) ? a : b)
+      : (!isNaN(+a)) ? a : (!isNaN(+b)) ? b : null;
+    if (d) return { iso: ymd(d), date: d };
+  }
+  m = /^(\d{1,2})[\s\-\/]([A-Za-záéíóúñ]+)[\s\-\/](\d{4})$/i.exec(r);
+  if (m){
+    const k = m[2].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const key = k.startsWith('sept') ? 'sept' : k.slice(0,3);
+    const mi = MONTHS_ES[key];
+    if (mi!=null){ const d = new Date(+m[3], mi, +m[1]); if (!isNaN(+d)) return { iso: ymd(d), date: new Date(d.getFullYear(), d.getMonth(), d.getDate()) }; }
+  }
+  const d = new Date(r);
+  return isNaN(+d) ? null : { iso: ymd(d), date: new Date(d.getFullYear(), d.getMonth(), d.getDate()) };
+}
+
+function getDateColInfo(cols){
+  const out = [];
+  for (let i = 0; i < cols.length; i++){
+    const info = parseHeaderDateLabel(cols[i]);
+    if (info) out.push({ i, ...info });
+  }
+  return out;
+}
+
+/* ====== LECTORES ====== */
+let _cbSeq=0;
+function fetchGViz(sheetId, sheetName){
+  return new Promise((resolve,reject)=>{
+    const cb=`__cb_${Date.now()}_${++_cbSeq}`;
+    const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?headers=1&tqx=out:json;responseHandler:${cb}&sheet=${encodeURIComponent(sheetName)}&ts=${Date.now()}`;
+    const sc=document.createElement('script');
+    const timeout=setTimeout(()=>{cleanup();reject(new Error('Timeout'))},12000);
+    function cleanup(){clearTimeout(timeout); delete window[cb]; if(sc.parentNode) sc.parentNode.removeChild(sc); }
+    window[cb]=(json)=>{cleanup(); try{
+      let cols=(json.table?.cols||[]).map(c=>c?.label ?? '');
+      let rows=(json.table?.rows||[]).map(r=>(r.c||[]).map(c=>c?.v ?? ''));
+      cols = cols.map(v=> (typeof v==='string'||typeof v==='number') ? v : String(v||'').trim());
+      const empty=cols.filter(c=>String(c||'').trim()===''||/^[A-Z]$/.test(String(c))).length;
+      if(empty>=Math.ceil(cols.length*0.5)&&rows.length){cols=rows[0].map(v=>v); rows=rows.slice(1);}
+      resolve({cols,rows});
+    }catch(e){reject(e)} };
+    sc.onerror=()=>{cleanup();reject(new Error('Error GViz'))};
+    sc.src=url; document.head.appendChild(sc);
+  });
+}
+async function fetchCSVByGid(sheetId,gid){
+  const url=`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}&ts=${Date.now()}`;
+  const res=await fetch(url,{cache:'no-store'}); if(!res.ok) throw new Error('CSV '+gid);
+  const txt=await res.text(); const rows=parseCSV(txt); const cols=(rows.shift()||[]).map(v=>v); return {cols,rows};
+}
+function parseCSV(t){
+  const rows=[]; let row=[], cur='', q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i],nx=t[i+1];
+    if(q){ if(ch==='"'&&nx==='"'){cur+='"';i++;} else if(ch==='"'){q=false;} else cur+=ch; }
+    else { if(ch==='"'){q=true;} else if(ch===','){row.push(cur);cur='';}
+      else if(ch==='\n'||ch==='\r'){ if(cur!==''||row.length){row.push(cur);rows.push(row);row=[];cur='';} }
+      else cur+=ch; } }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);} return rows;
+}
+
+/* ====== PARSERS ====== */
+function parseRegistro(cols,rows){
+  const iUID=cols.findIndex(c=>/uid[_ ]?preset/i.test(String(c)));
+  const iF=cols.findIndex(c=>/^fecha$/i.test(String(c)));
+  const iFO=cols.findIndex(c=>/fecha.*objetivo/i.test(String(c)));
+  const iID=cols.findIndex(c=>/^(id|matric)/i.test(String(c)));
+  const iNom=cols.findIndex(c=>/^nombre/i.test(String(c)));
+  const iMat=cols.findIndex(c=>/^materia$/i.test(String(c)));
+  const iNum=cols.findIndex(c=>/n.?trabajo|n.? ?°/i.test(String(c)));
+  const iOri=cols.findIndex(c=>/^origen$/i.test(String(c)));
+  const iPag=cols.findIndex(c=>/^p[aá]gina/i.test(String(c)));
+  const iPts=cols.findIndex(c=>/^puntos$/i.test(String(c)));
+  const iAtr=cols.findIndex(c=>/atraso/i.test(String(c)));
+  const iMom=cols.findIndex(c=>/^momento$/i.test(String(c)));
+  const iNomT=cols.findIndex(c=>/nombre.*trabajo/i.test(String(c)));
+  return rows.map(r=>{
+    const fecha=String(r[iF]??'').trim(); const fo=String((iFO>=0?r[iFO]:'')??'').trim()||fecha;
+    const atraso = (()=>{ if(iAtr>=0 && r[iAtr]!=='' && r[iAtr]!=null) return +r[iAtr]||0;
+      const d=new Date(fecha), o=new Date(fo); if(isNaN(+d)||isNaN(+o)) return 0; return Math.max(0, Math.round((d-o)/86400000));})();
+    return { uidPreset:String((iUID>=0?r[iUID]:'')??'').trim(), fecha, fechaObjetivo:fo, id:String((iID>=0?r[iID]:'')??'').trim(),
+      nombre:String((iNom>=0?r[iNom]:'')??'').trim(), materia:String((iMat>=0?r[iMat]:'')??'').trim(),
+      numero:String((iNum>=0?r[iNum]:'')??'').trim(), origen:String((iOri>=0?r[iOri]:'')??'').trim(),
+      pagina:String((iPag>=0?r[iPag]:'')??'').trim(), puntos:+((iPts>=0?r[iPts]:0)??0)||0,
+      atrasoDias:atraso, momento:String((iMom>=0?r[iMom]:'')??'').trim(), nombreTrabajo:String((iNomT>=0?r[iNomT]:'')??'').trim()
+    };
+  });
+}
+function parsePresets(cols,rows){
+  const iUID=cols.findIndex(c=>/uid[_ ]?preset/i.test(String(c)));
+  const iFO=cols.findIndex(c=>/fecha.*objetivo/i.test(String(c)));
+  const iMom=cols.findIndex(c=>/^momento$/i.test(String(c)));
+  const iMat=cols.findIndex(c=>/^materia$/i.test(String(c)));
+  const iNum=cols.findIndex(c=>/n.?trabajo|n.? ?°/i.test(String(c)));
+  const iOri=cols.findIndex(c=>/^origen$/i.test(String(c)));
+  const iPag=cols.findIndex(c=>/^p[aá]gina/i.test(String(c)));
+  const iNom=cols.findIndex(c=>/nombre.*trabajo/i.test(String(c)));
+  return rows.map(r=>({uid:String((iUID>=0?r[iUID]:'')??'').trim(),
+    fechaObjetivo:String((iFO>=0?r[iFO]:'')??'').trim(), momento:String((iMom>=0?r[iMom]:'')??'').trim(),
+    materia:String((iMat>=0?r[iMat]:'')??'').trim(), numero:String((iNum>=0?r[iNum]:'')??'').trim(),
+    origen:String((iOri>=0?r[iOri]:'')??'').trim(), pagina:String((iPag>=0?r[iPag]:'')??'').trim(),
+    nombreTrabajo:String((iNom>=0?r[iNom]:'')??'').trim()})).filter(p=>p.uid);
+}
+
+/* ====== ASISTENCIA ====== */
+function asistenciaAlumno(cols,rows,ref,start,end,opts={}){
+  const iId  = findIDColumn(cols, rows);
+  const iNom = cols.findIndex(c=>/^nombre/i.test(String(c)));
+  let row = null;
+  if (iId >= 0 && ref.id) row = rows.find(r => norm(r[iId]) === norm(ref.id));
+  if (!row && iNom >= 0 && ref.nombre) row = rows.find(r => norm(r[iNom]) === norm(ref.nombre));
+  if (!row) return {present:0,total:0,row:null};
+
+  let infos = getDateColInfo(cols).filter(x => x.iso >= start && x.iso <= end);
+  if (opts.excludeWeekends) infos = infos.filter(x => !isWeekend(x.iso));
+
+  let present = 0, total = 0;
+  for (const info of infos){
+    const v = row[info.i];
+    total++; if (isPresent(v)) present++;
+  }
+  return {present,total,row};
+}
+function asistenciaHistorica(cols,rows,ref,opts={}){
+  const iId  = findIDColumn(cols, rows);
+  const iNom = cols.findIndex(c=>/^nombre/i.test(String(c)));
+  let row = null;
+  if (iId >= 0 && ref.id) row = rows.find(r => norm(r[iId]) === norm(ref.id));
+  if (!row && iNom >= 0 && ref.nombre) row = rows.find(r => norm(r[iNom]) === norm(ref.nombre));
+  if (!row) return {present:0,total:0};
+
+  let infos = getDateColInfo(cols).filter(x => x.iso >= SCHOOL_YEAR_START);
+  if (opts.excludeWeekends) infos = infos.filter(x => !isWeekend(x.iso));
+
+  let present = 0, total = 0;
+  for (const info of infos){
+    const v = row[info.i];
+    total++; if (isPresent(v)) present++;
+  }
+  return {present,total};
+}
+function weekRange(d){
+  const day=d.getDay(); const diff=(day===0?-6:1-day);
+  const mon=new Date(d); mon.setDate(d.getDate()+diff); mon.setHours(0,0,0,0);
+  const fri=new Date(mon); fri.setDate(mon.getDate()+4);
+  return [ymd(mon), ymd(fri)];
+}
+
+/* ====== CARGA ====== */
+async function loadBlock(name){
+  const names={asistencia:'Asistencia', registro:'Registro de trabajos', presets:'Presets'};
+  try{ return await fetchGViz(SHEET_ID, names[name]); }
+  catch{ return await fetchCSVByGid(SHEET_ID, GIDS[name]); }
+}
+async function loadLinks(){
+  try{ const r=await fetch(LINKS_JSON,{cache:'no-store'}); if(r.ok){ const j=await r.json(); if(j?.items) LINKMAP=j.items; } }catch{}
+}
+
+/* ====== PANEL DOCENTE (Presets por fecha) ====== */
+let PRESETS_ALL = [];
+function renderPlan(dateStartISO, dateEndISO){
+  const inRange = PRESETS_ALL.filter(p=>{
+    const fo = normDate(p.fechaObjetivo);
+    return fo && fo >= dateStartISO && fo <= dateEndISO;
+  });
+  // Lista simple
+  const renderItem=(t)=>{
+    const mom = t.momento ? ` · ${t.momento}` : '';
+    const the_fecha = t.fechaObjetivo ? ` · ${normDate(t.fechaObjetivo)}` : '';
+    const nom = t.nombreTrabajo ? ` · <i>${t.nombreTrabajo}</i>` : '';
+    return `<details>
+      <summary><b>${t.materia||'–'}</b> — ${t.numero||'–'} (${t.origen||'–'}${t.pagina?' · p.'+t.pagina:''})${nom}${the_fecha}${mom}</summary>
+    </details>`;
+  };
+  $('#planList').innerHTML = inRange.length ? inRange.map(renderItem).join('') : '<div class="hint">Sin trabajos programados en el rango.</div>';
+  // Resumen por materia
+  const agg=new Map();
+  for(const p of inRange){
+    const k=p.materia||'–';
+    const a=agg.get(k)||{tot:0, m:new Map()};
+    a.tot++; a.m.set(p.momento||'–',(a.m.get(p.momento||'–')||0)+1);
+    agg.set(k,a);
+  }
+  const out=[...agg.entries()].sort((a,b)=>b[1].tot-a[1].tot).map(([mat,a])=>{
+    const parts=[...a.m.entries()].map(([mom,n])=>`${mom}: ${n}`).join(' · ');
+    return `<div class="row"><b>${mat}</b><span class="tag">Total: ${a.tot}</span><span class="hint">${parts}</span></div>`;
+  });
+  $('#planByMat').innerHTML = out.length ? out.join('') : '<div class="hint">—</div>';
+}
+
+/* ====== DIRECTORIO DE ALUMNOS ====== */
+let STUDENTS = []; // [{id, nombre}], ordenados por nombre
+function buildStudentIndexFromAsis(asis){
+  const iId = findIDColumn(asis.cols, asis.rows);
+  const iNom = asis.cols.findIndex(c=>/^nombre/i.test(String(c)));
+  if (iId<0 || iNom<0) return [];
+  const seen=new Set(), arr=[];
+  for(const r of asis.rows){
+    const id=String(r[iId]||'').trim();
+    const nom=String(r[iNom]||'').trim();
+    if(id && nom && !seen.has(id)){ seen.add(id); arr.push({id, nombre:nom}); }
+  }
+  return arr.sort((a,b)=> a.nombre.localeCompare(b.nombre,'es',{sensitivity:'base'}));
+}
+function renderAllList(){
+  $('#stdCount').textContent = STUDENTS.length;
+  const host=$('#allList');
+  host.innerHTML = STUDENTS.map((s,i)=>`<div class="sg-item" data-k="${i}">
+    <span>${s.nombre}</span><span class="tag">${s.id}</span></div>`).join('');
+  host.querySelectorAll('.sg-item').forEach(el=>{
+    el.onclick=()=>openStudentByIndex(+el.getAttribute('data-k'));
+  });
+}
+
+/* ====== VISTA ALUMNO ====== */
+let ALL = {faltantes:[], tarde:[], atiempo:[], presets:[]};
+let TRI='ALL';
+let CURRENT_INDEX=-1;
+
+function setTriChips(){
+  const host=$('#tri-chips');
+  const opts=[['ALL','Todo'],['M1','Trimestre 1'],['M2','Trimestre 2'],['M3','Trimestre 3']];
+  host.innerHTML=opts.map(([v,l])=>`<button class="chip ${TRI===v?'active':''}" data-v="${v}">${l}</button>`).join('');
+  for(const b of host.querySelectorAll('.chip')) b.onclick=()=>{TRI=b.getAttribute('data-v'); setTriChips(); renderLists();};
+  $('#tri-subtitle').textContent='Resumen de '+({ALL:'Todo',M1:'Trimestre 1',M2:'Trimestre 2',M3:'Trimestre 3'}[TRI]);
+}
+function byTri(list){ if(TRI==='ALL') return list; return list.filter(x=>String(x.momento||'').toUpperCase()===TRI); }
+function renderBarChart({faltantes,tarde,atiempo}){
+  const max=Math.max(faltantes,tarde,atiempo,1);
+  const set=(id,val)=>{ const el=$(id); el.style.setProperty('--pct',(val/max).toFixed(3)); el.querySelector('.val').textContent=val; };
+  set('#bar-fal',faltantes); set('#bar-tar',tarde); set('#bar-ati',atiempo);
+}
+function linksFor(uid){
+  const rec = LINKMAP?.[uid];
+  if(!rec) return '';
+  const arr = Array.isArray(rec.urls) ? rec.urls : (rec.url?[rec.url]:[]);
+  if(!arr.length) return '';
+  return arr.map((u,i)=>`<a class="linkbtn" href="${u}" target="_blank" rel="noopener">📷 Evidencia ${arr.length>1?i+1:''}</a>`).join('');
+}
+function renderLists(){
+  const falt=byTri(ALL.faltantes), tar=byTri(ALL.tarde), ati=byTri(ALL.atiempo);
+  const totalTri = byTri(ALL.presets).length;
+  const hechosTri = tar.length + ati.length;
+  $('#stat-cump-tri').textContent = totalTri? `${Math.round(hechosTri/totalTri*100)}%` : '–';
+  $('#stat-tot-tri').textContent  = `Faltantes ${falt.length} · Tarde ${tar.length} · A tiempo ${ati.length} · Trabajos totales ${totalTri}`;
+  renderBarChart({faltantes:falt.length, tarde:tar.length, atiempo:ati.length});
+
+  const renderItem = (t) => {
+    const mom = t.momento ? ` · ${t.momento}` : '';
+    const the_fecha = t.fechaObjetivo ? ` · ${normDate(t.fechaObjetivo)}` : '';
+    const nom = t.nombreTrabajo ? ` · <i>${t.nombreTrabajo}</i>` : '';
+    const kLink = linksFor(t.uid);
+    return `<details>
+      <summary><b>${t.materia||'–'}</b> — ${t.numero||'–'} (${t.origen||'–'}${t.pagina?' · p.'+t.pagina:''})${nom}${the_fecha}${mom}${kLink? ' ' + kLink : ''}</summary>
+    </details>`;
+  };
+  $('#faltantes').innerHTML = falt.length ? falt.map(renderItem).join('') : '<div class="hint">Sin faltantes 🧾</div>';
+  $('#tarde').innerHTML     = tar.length   ? tar.map(renderItem).join('')   : '<div class="hint">Sin entregas tarde</div>';
+  $('#atiempo').innerHTML   = ati.length   ? ati.map(renderItem).join('')   : '<div class="hint">Aún no hay entregas registradas</div>';
+}
+
+async function cargarAlumnoPorID(id){
+  $('#student-view').style.display='none';
+  $('#alumno-nombre').textContent='Cargando…'; $('#alumno-id').textContent='';
+
+  await loadLinks();
+  const [asis, reg, pre] = await Promise.all([loadBlock('asistencia'), loadBlock('registro'), loadBlock('presets')]);
+
+  const entregas = parseRegistro(reg.cols, reg.rows);
+  const presets  = parsePresets(pre.cols, pre.rows);
+  let entAlumno  = entregas.filter(t => norm(t.id) === norm(id));
+  const nombreDeRegistro = entAlumno.find(e => e.nombre)?.nombre || '';
+
+  const uids   = new Map(entAlumno.filter(t => t.uidPreset).map(t => [t.uidPreset, t]));
+  const claves = new Map(entAlumno.filter(t => !t.uidPreset).map(t => [
+    [norm(t.materia), norm(String(t.numero).replace(/^trabajo\s*/i,'')),
+     norm(t.origen),  norm(t.pagina), normDate(t.fechaObjetivo)].join('|'), t
+  ]));
+
+  const faltantes=[], tarde=[], atiempo=[];
+  for (const p of presets){
+    let e = uids.get(p.uid);
+    if (!e){
+      const k = [norm(p.materia), norm(String(p.numero).replace(/^trabajo\s*/i,'')),
+                 norm(p.origen),  norm(p.pagina), normDate(p.fechaObjetivo)].join('|');
+      e = claves.get(k);
+    }
+    if (e) { (e.atrasoDias > 0 ? tarde : atiempo).push(p); } else { faltantes.push(p); }
+  }
+  ALL={faltantes,tarde,atiempo,presets};
+
+  const [w0,w1] = weekRange(new Date());
+  const aw = asistenciaAlumno(asis.cols, asis.rows, {id, nombre:nombreDeRegistro}, w0, w1, {excludeWeekends:true});
+
+  const hoy = new Date();
+  const d30 = ymd(new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate()-30));
+  const start30 = (d30 < SCHOOL_YEAR_START) ? SCHOOL_YEAR_START : d30;
+
+  const iNom = asis.cols.findIndex(c=>/^nombre/i.test(String(c)));
+  let nombre = nombreDeRegistro;
+  if (aw.row && iNom>=0) nombre = String(aw.row[iNom]||'');
+  if (!nombre){
+    const iId = findIDColumn(asis.cols, asis.rows);
+    if (iId>=0 && iNom>=0){
+      const r=asis.rows.find(r=>norm(r[iId])===norm(id));
+      if (r) nombre=String(r[iNom]||'');
+    }
+  }
+  if (!nombre){ alert('No encontramos ese ID. Verifica que exista en Asistencia/Registro.'); return; }
+
+  $('#alumno-nombre').textContent = nombre;
+  $('#alumno-id').textContent     = 'ID: ' + id;
+  $('#grupo-label').innerHTML     = `<span class="badgeb">👩‍🏫 Grupo: <b>${GROUP_LABEL}</b></span>`;
+
+  const a30 = asistenciaAlumno(asis.cols, asis.rows, {id, nombre:nombre}, start30, ymd(hoy), {excludeWeekends:true});
+  const ah  = asistenciaHistorica(asis.cols, asis.rows, {id, nombre:nombre}, {excludeWeekends:true});
+
+  $('#stat-aswk').textContent   = aw.total  ? `${Math.round(aw.present/aw.total*100)}%  (${aw.present}/${aw.total})` : '–';
+  $('#stat-as30').textContent   = a30.total ? `${Math.round(a30.present/a30.total*100)}%  (${a30.present}/${a30.total})` : '–';
+  $('#stat-asHist').textContent = ah.total  ? `${Math.round(ah.present/ah.total*100)}%  (${ah.present}/${ah.total})` : '–';
+  $('#stat-faltHist').textContent = ah.total ? `${ah.total - ah.present}` : '–';
+
+  TRI='ALL'; setTriChips(); renderLists();
+
+  $('#student-view').style.display='block';
+  window.scrollTo({top:document.body.offsetTop, behavior:'smooth'});
+}
+
+/* ====== UI ====== */
+const themeBtn=$('#themeBtn');
+function applyTheme(t){document.documentElement.setAttribute('data-theme', t); themeBtn.textContent=(t==='dark'?'☀️ Claro':'🌙 Oscuro'); localStorage.setItem('docente_theme',t);}
+applyTheme(localStorage.getItem('docente_theme')||'light');
+themeBtn.onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+
+/* Abrir hojas rápido */
+const openPresetsURL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${GIDS.presets}`;
+const openRegistroURL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${GIDS.registro}`;
+$('#openPresets').href = openPresetsURL;
+$('#openRegistro').href = openRegistroURL;
+
+/* Guardar último alumno */
+$('#saveBtn').onclick=()=>{const v=($('#searchInput').value||'').trim(); if(!v){alert('Escribe nombre o ID.'); return;} localStorage.setItem('docente_last',v); alert('Guardado.'); };
+
+/* Sugerencias y búsqueda */
+let SG_VISIBLE=false;
+function hideSG(){ SG_VISIBLE=false; $('#sgBox').style.display='none'; }
+function showSG(items){
+  const box=$('#sgBox');
+  box.innerHTML = items.map((s,i)=>`<div class="sg-item" data-id="${s.id}">
+      <span>${s.nombre}</span><span class="tag">${s.id}</span></div>`).join('');
+  box.querySelectorAll('.sg-item').forEach(el=>{
+    el.onclick=()=>{ $('#searchInput').value = `${el.children[0].textContent}`; openStudentById(el.getAttribute('data-id')); hideSG(); };
+  });
+  SG_VISIBLE=true; box.style.display='block';
+}
+function filterSG(q){
+  const t=norm(q);
+  if(t.length<2){ hideSG(); return; }
+  // match por nombre o por ID aproximado
+  const best = STUDENTS.filter(s => norm(s.nombre).includes(t) || norm(s.id).includes(t)).slice(0,10);
+  if(!best.length){ hideSG(); return; }
+  showSG(best);
+}
+$('#searchInput').addEventListener('input', e=>filterSG(e.target.value));
+document.addEventListener('click', e=>{ if(!$('#sgBox').contains(e.target) && e.target!==$('#searchInput')) hideSG(); });
+
+/* Abrir por texto (nombre o ID) */
+$('#openBtn').onclick=()=>{
+  const q=($('#searchInput').value||'').trim();
+  if(!q){ alert('Escribe nombre o ID.'); return; }
+  // Si parece ID válido, abre directo
+  const m=q.toUpperCase().match(/^ID[A-Z0-9]{6,}$/);
+  if(m){ openStudentById(m[0]); return; }
+  // Si es nombre, busca match exacto o primero parcial
+  const t=norm(q);
+  let hit = STUDENTS.find(s => norm(s.nombre)===t);
+  if(!hit) hit = STUDENTS.find(s => norm(s.nombre).includes(t));
+  if(!hit){ alert('No hallé ese alumno. Prueba con otra parte del nombre o pega el ID.'); return; }
+  openStudentById(hit.id);
+};
+
+/* Lista completa */
+$('#listAllBtn').onclick=()=>{
+  const el=$('#allList');
+  el.style.display = (el.style.display==='none' || !el.style.display) ? 'block' : 'none';
+};
+
+/* Navegación anterior / siguiente */
+function openStudentByIndex(i){
+  if(i<0||i>=STUDENTS.length) return;
+  CURRENT_INDEX=i;
+  const s=STUDENTS[i];
+  $('#searchInput').value=s.nombre;
+  localStorage.setItem('docente_last', s.nombre);
+  openStudentById(s.id);
+}
+function openStudentById(id){
+  const i = STUDENTS.findIndex(s=>s.id===id);
+  if(i>=0) CURRENT_INDEX=i;
+  cargarAlumnoPorID(id);
+}
+$('#prevBtn').onclick=()=>{ if(CURRENT_INDEX<=0) return; openStudentByIndex(CURRENT_INDEX-1); };
+$('#nextBtn').onclick=()=>{ if(CURRENT_INDEX<0 || CURRENT_INDEX>=STUDENTS.length-1) return; openStudentByIndex(CURRENT_INDEX+1); };
+$('#backBtn')?.addEventListener('click',()=>{ $('#student-view').style.display='none'; window.scrollTo({top:0,behavior:'smooth'}); });
+
+/* ====== PLAN CHIPS ====== */
+function setPlanChips(mode){
+  const host=$('#planChips');
+  const opts=[['HOY','Hoy'],['SEM','Semana actual']];
+  host.innerHTML=opts.map(([v,l])=>`<button class="chip ${mode===v?'active':''}" data-v="${v}">${l}</button>`).join('');
+  for(const b of host.querySelectorAll('.chip')) b.onclick=()=>{
+    const v=b.getAttribute('data-v');
+    if(v==='HOY'){ $('#planDate').value = ymd(new Date()); renderPlan(ymd(new Date()), ymd(new Date())); }
+    else { const [a,b] = weekRange(new Date()); $('#planDate').value=a; renderPlan(a,b); }
+    setPlanChips(v);
+  };
+}
+
+/* ====== STARTUP ====== */
+(async function init(){
+  // Presets para panel docente
+  try{
+    const pre = await loadBlock('presets');
+    PRESETS_ALL = parsePresets(pre.cols, pre.rows);
+    const todayISO = ymd(new Date());
+    $('#planDate').value = todayISO;
+    setPlanChips('HOY');
+    renderPlan(todayISO, todayISO);
+  }catch(e){ console.warn('No se pudo cargar Presets para panel docente', e); }
+
+  // Directorio de alumnos desde Asistencia
+  try{
+    const asis = await loadBlock('asistencia');
+    STUDENTS = buildStudentIndexFromAsis(asis);
+    renderAllList();
+  }catch(e){ console.error('No se pudo construir directorio de alumnos', e); }
+
+  // Cambios de fecha en panel docente
+  $('#planDate').addEventListener('change', e=>{
+    const d = e.target.value || ymd(new Date());
+    renderPlan(d, d);
+    setPlanChips('HOY');
+  });
+
+  // Atajos
+  const last = localStorage.getItem('docente_last');
+  if(last) $('#searchInput').value = last;
+})();
+</script>
 </body>
 </html>
