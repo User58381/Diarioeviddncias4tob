@@ -9,7 +9,6 @@
     --bg:#f7f9ff; --card:#ffffff; --text:#0b1020; --muted:#526072; --accent:#2b6bff;
     --bd:#d9e3ff; --ok:#0ea371; --warn:#f0b429; --bad:#ef4444;
     --barbg: color-mix(in oklab, var(--card) 80%, transparent);
-    /* NUEVO: tamaño de separador por materia en vista alumno */
     --materiaSepSpace: 12px;
   }
   [data-theme="dark"]{
@@ -73,14 +72,20 @@
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .soft{background:color-mix(in oklab,var(--card) 93%,transparent);border:1px dashed var(--bd)}
 
-  /* NUEVO: buscador de trabajos */
+  /* TOPS + buscador */
+  .tops{display:grid;grid-template-columns:1fr;gap:10px}
+  @media(min-width:920px){.tops{grid-template-columns:repeat(3,1fr)}}
+  .ritem{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;background:color-mix(in oklab,var(--card) 96%,transparent)}
+  .rmeta{font-size:12px;color:var(--muted)}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:12px;color:var(--muted)}
+
   .scope-chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
   .scope-chip{border:1px solid var(--bd);background:transparent;border-radius:999px;padding:8px 12px;font-weight:700;cursor:pointer;font-size:13px}
   .scope-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
   .search-results{max-height:280px;overflow:auto;margin-top:6px}
   .search-empty{color:var(--muted);font-size:13px}
 
-  /* NUEVO: separadores por materia */
+  /* Separadores por materia (vista alumno) */
   .materia-sep{
     margin: var(--materiaSepSpace) 0 6px;
     padding-top: 6px;
@@ -134,40 +139,39 @@
     <div class="hint" style="margin-top:6px">Este sitio <u>solo lee</u> datos del cuaderno digital.</div>
   </section>
 
-  <!-- NUEVO: Tops del grupo -->
-  <section class="card" id="tops-card" style="margin-top:14px;display:block">
+  <!-- Tops -->
+  <section class="card" id="tops-card" style="margin-top:14px;display:none">
     <div class="topbar">
       <div>
-        <h2>🏆 Tops del grupo</h2>
-        <div class="hint" id="tops-sub">Cálculo con <b>Todo</b> (puedes cambiar a M1/M2/M3 desde la vista de alumno)</div>
+        <h2>🏆 Top 7</h2>
+        <div class="hint" id="tops-sub">Se actualiza con <b>Todo</b> / M1 / M2 / M3</div>
       </div>
       <div class="row">
         <button id="recalcTopsBtn" class="btn ghost small" title="Recalcular tops">↻ Recalcular</button>
       </div>
     </div>
-    <div class="grid3" style="margin-top:10px">
-      <div class="card soft">
-        <h3>🟢 Top 7 — Asistencia</h3>
-        <div id="top-asistencia" class="list"><div class="hint">Leyendo…</div></div>
+    <div class="tops" style="margin-top:8px">
+      <div>
+        <h3>Asistencia</h3>
+        <div id="top-asist" class="list"></div>
       </div>
-      <div class="card soft">
-        <h3>📝 Top 7 — Trabajos</h3>
-        <div id="top-trabajos" class="list"><div class="hint">Leyendo…</div></div>
+      <div>
+        <h3>Trabajos</h3>
+        <div id="top-trab" class="list"></div>
       </div>
-      <div class="card soft">
-        <h3>🏅 Top 7 — Total combinado</h3>
-        <div id="top-total" class="list"><div class="hint">Leyendo…</div></div>
+      <div>
+        <h3>General</h3>
+        <div id="top-total" class="list"></div>
       </div>
     </div>
-    <p class="footer-note">“Total combinado” = promedio (50% asistencia + 50% trabajos). Trabajos y puntos respetan el trimestre.</p>
   </section>
 
-  <!-- NUEVO: Buscador general / alumno -->
+  <!-- Buscador de trabajos -->
   <section class="card" id="work-search-card" style="margin-top:14px">
     <div class="topbar">
       <div>
         <h2>🔎 Buscar trabajos</h2>
-        <div class="hint">Busca por <b>nombre del trabajo</b>, <b>materia</b> o <b>momento</b> (ej.: “M1 ciencias”, “libreta ecosistema”, “Mat 4”).</div>
+        <div class="hint">Busca por <b>nombre del trabajo</b>, <b>materia</b> o <b>momento</b> (ej.: “M1 ciencias”, “libreta ecosistema”).</div>
       </div>
       <div class="row">
         <div class="scope-chips" id="scope-chips">
@@ -179,7 +183,7 @@
     </div>
 
     <div class="input" style="grid-template-columns:1fr auto">
-      <input id="workSearchInput" autocomplete="off" placeholder="Ej.: M2 biología ecosistema · dibujo · libreta p.23…" inputmode="latin-name">
+      <input id="workSearchInput" autocomplete="off" placeholder="Ej.: M2 biología ecosistema · libreta p.23…" inputmode="latin-name">
       <button id="clearWorkSearch" class="btn ghost">Limpiar</button>
     </div>
     <div class="hint" id="workSearchHint">Ámbito: <b>Auto</b>. Si hay alumno abierto, busca en sus faltantes; si no, busca en todos los presets.</div>
@@ -218,7 +222,7 @@
       <div class="chart" aria-label="Resumen visual del trimestre">
         <div class="bar fal" id="bar-fal"><span class="lbl">⏳ Faltantes</span><span class="val" id="val-fal">0</span></div>
         <div class="bar tar" id="bar-tar"><span class="lbl">🕒 Tarde</span><span class="val" id="val-tar">0</span></div>
-        <div class="bar ati" id="val-ati-wrap"><span class="lbl">✅ A tiempo</span><span class="val" id="val-ati">0</span></div>
+        <div class="bar ati" id="bar-ati"><span class="lbl">✅ A tiempo</span><span class="val" id="val-ati">0</span></div>
       </div>
 
       <p class="footer-note" style="margin-top:10px">
@@ -245,15 +249,35 @@
 </main>
 
 <script>
-/* ====== CONFIG ====== */
-const SHEET_ID = '1SWtGmXlf7WbNvUlJBDktXpDcq5OfJkHE75bH5nkxurk';
-const GIDS = { puntos:'0', asistencia:'280572348', registro:'1343140445', presets:'104702199' };
-const GROUP_LABEL = '4to A';
-const SCHOOL_YEAR_START = '2025-09-01';
+/* ====== CONFIG (tu Drive) ====== */
+let SHEET_ID = '1SWtGmXlf7WbNvUlJBDktXpDcq5OfJkHE75bH5nkxurk';
+let GIDS = {
+  puntos:     '0',
+  asistencia: '280572348',
+  registro:   '1343140445',
+  presets:    '104702199'
+};
+let GROUP_LABEL = '4to A Matutino';
+let SCHOOL_YEAR_START = '2025-09-01';
 
-/* JSON evidencias — MISMO archivo/ruta que usas */
-const LINKS_JSON = 'data/links_4A.json';
+/* Overrides por querystring (opcional) */
+(function applyOverridesFromURL(){
+  const q = new URLSearchParams(location.search);
+  if (q.get('sheet')) SHEET_ID = q.get('sheet');
+  if (q.get('asis'))  GIDS.asistencia = q.get('asis');
+  if (q.get('reg'))   GIDS.registro   = q.get('reg');
+  if (q.get('pre'))   GIDS.presets    = q.get('pre');
+  if (q.get('group')) GROUP_LABEL     = q.get('group');
+  if (q.get('start')) SCHOOL_YEAR_START = q.get('start');
+  console.log('[CFG]', {SHEET_ID, GIDS, GROUP_LABEL, SCHOOL_YEAR_START});
+})();
+
+/* JSON evidencias (opcional) */
+let LINKS_JSON = 'data/links_4A.json';
 let LINKMAP = {};
+
+/* Pesos del score total (A/T/P) */
+const TOP_WEIGHTS = { asistencia:0.40, trabajos:0.30, puntos:0.30 };
 
 /* ====== UTIL ====== */
 const $  = s => document.querySelector(s);
@@ -263,14 +287,16 @@ const pad   = n => String(n).padStart(2,'0');
 const ymd   = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const TODAY = new Date();
 const MONTHS_ES = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,sept:8,oct:9,nov:10,dic:11};
-function toLocalDate(value){ if (value instanceof Date) return value; const s = String(value||'').trim(); const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if (m) return new Date(+m[1], +m[2]-1, +m[3]); return new Date(s); }
+function toLocalDate(value){ if (value instanceof Date) return value; const s=String(value||'').trim(); const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if(m) return new Date(+m[1],+m[2]-1,+m[3]); return new Date(s); }
 const isWeekend = v => { const d = toLocalDate(v); const k = d.getDay(); return k===0 || k===6; };
 const minIso = (a,b)=> (a && b) ? (a<b?a:b) : (a||b||'');
 const maxIso = (a,b)=> (a && b) ? (a>b?a:b) : (a||b||'');
 
 /* ====== ID / fechas ====== */
 function findIDColumn(cols, rows){
-  let idx = cols.findIndex(c => /^(id|matric)/i.test(String(c||'')));
+  let idx = cols.findIndex(c => String(c||'').trim().toUpperCase() === 'ID');
+  if (idx >= 0) return idx;
+  idx = cols.findIndex(c => /^(id|matric)/i.test(String(c||'')));
   if (idx >= 0) return idx;
   let best=-1, bestOk=-1;
   for (let i=0;i<cols.length;i++){
@@ -393,7 +419,7 @@ function parseCSV(t){
 
 /* ====== PARSERS ====== */
 function parseRegistro(cols,rows){
-  const iUID=cols.findIndex(c=>/uid[_ ]?preset/i.test(String(c)));
+  const iUID=cols.findIndex(c=>/uid[_ ]?[_ ]?preset/i.test(String(c)));
   const iF=cols.findIndex(c=>/^fecha$/i.test(String(c)));
   const iFO=cols.findIndex(c=>/fecha.*objetivo/i.test(String(c)));
   const iID=cols.findIndex(c=>/^(id|matric)/i.test(String(c)));
@@ -419,7 +445,7 @@ function parseRegistro(cols,rows){
   });
 }
 function parsePresets(cols,rows){
-  const iUID=cols.findIndex(c=>/uid[_ ]?preset/i.test(String(c)));
+  const iUID=cols.findIndex(c=>/uid[_ ]?[_ ]?preset/i.test(String(c)));
   const iFO=cols.findIndex(c=>/fecha.*objetivo/i.test(String(c)));
   const iMom=cols.findIndex(c=>/^momento$/i.test(String(c)));
   const iMat=cols.findIndex(c=>/^materia$/i.test(String(c)));
@@ -474,7 +500,7 @@ function asistenciaHistorica(cols,rows,ref,opts={}){
 
   let present = 0, total = 0;
   for (const info of infos){
-    const v = row[info.i];
+    const v = rows.find(r => norm(r[iId])===norm(ref.id))?.[info.i];
     total++; if (isPresent(v)) present++;
   }
   return {present,total};
@@ -488,54 +514,10 @@ function weekRange(d){
   return [ymd(mon), ymd(fri)];
 }
 
-/* ====== TRIMESTRES ====== */
-function triDateRange(tri, asisCols, presets){
-  const todayISO = ymd(new Date());
-  if(tri==='ALL') return [SCHOOL_YEAR_START, todayISO];
-
-  const ps = presets.filter(p => String(p.momento||'').toUpperCase()===tri);
-  let minF='', maxF='';
-  for(const p of ps){
-    const f = normDate(p.fechaObjetivo);
-    if(!f) continue;
-    minF = minIso(minF, f);
-    maxF = maxIso(maxF, f);
-  }
-  if(minF && maxF) return [minF, maxF];
-
-  const infos = getDateColInfo(asisCols).filter(x => x.iso >= SCHOOL_YEAR_START).sort((a,b)=>a.iso.localeCompare(b.iso));
-  if(infos.length<2) return [SCHOOL_YEAR_START, todayISO];
-  const n = infos.length;
-  const i1 = Math.max(0, Math.floor(n/3)-1);
-  const i2 = Math.max(i1+1, Math.floor(2*n/3)-1);
-  const ranges = [
-    [infos[0].iso, infos[i1].iso],
-    [infos[i1+1]?.iso || infos[i1].iso, infos[i2].iso],
-    [infos[i2+1]?.iso || infos[i2].iso, infos[n-1].iso]
-  ];
-  return tri==='M1' ? ranges[0] : tri==='M2' ? ranges[1] : ranges[2];
-}
-
-/* ====== CARGA Y RENDER ====== */
-async function loadBlock(name){
-  const names = {asistencia:'Asistencia', registro:'Registro de trabajos', presets:'Presets'};
-  try{ return await fetchGViz(SHEET_ID, names[name]); }
-  catch{ return await fetchCSVByGid(SHEET_ID, GIDS[name]); }
-}
-async function loadLinks(){
-  try{
-    const r=await fetch(LINKS_JSON,{cache:'no-store'});
-    if(r.ok){
-      const j=await r.json();
-      if(j?.items) LINKMAP=j.items;
-    }
-  }catch(e){ console.warn('No se pudo cargar LINKS_JSON', e); }
-}
-
-/* ====== DIRECTORIO DE ALUMNOS ====== */
-let STUDENTS = []; // [{id, nombre}] ordenados
+/* ====== DIRECTORIO ====== */
+let STUDENTS = [];
 function buildStudentIndexFromAsis(asis){
-  const iId  = findIDColumn(asis, asis.rows);
+  const iId  = findIDColumn(asis.cols, asis.rows);
   let iNom = asis.cols.findIndex(c=>/^nombre/i.test(String(c||'')));
   if (iNom<0){
     let best=-1, bestScore=-1;
@@ -568,145 +550,142 @@ function renderAllList(){
   });
 }
 
-/* ====== VISTA ALUMNO ====== */
+/* ====== GLOBALES ====== */
 let ALL = {faltantes:[], tarde:[], atiempo:[], presets:[]};
 let TRI='ALL';
 let CURRENT_INDEX=-1;
+let DATA = { asis:null, reg:null, pre:null };
 
-/* ====== CACHES PARA TOPS Y PUNTOS ====== */
-let G_ASIS=null, G_ENTREGAS=[], G_PRESETS=[];
-let G_MAXPTS=null;
-
-/* Índice de puntos máximos por preset (uid o clave compuesta) */
-function buildMaxPointsIndex(){
-  const m = new Map();
-  const keyOfEntrega = (t)=>{
-    const base = [norm(t.materia), norm(String(t.numero).replace(/^trabajo\s*/i,'')),
-                  norm(t.origen),  norm(t.pagina), normDate(t.fechaObjetivo)].join('|');
-    return t.uidPreset ? `uid:${t.uidPreset}` : `k:${base}`;
-  };
-  for(const t of G_ENTREGAS){
-    const k = keyOfEntrega(t);
-    const prev = m.get(k) || 0;
-    const pts = +t.puntos || 0;
-    if(pts > prev) m.set(k, pts);
+/* ====== Lectores de bloques ====== */
+async function loadBlock(name){
+  const names = {asistencia:'Asistencia', registro:'Registro de trabajos', presets:'Presets'};
+  try{ return await fetchGViz(SHEET_ID, names[name]); }
+  catch{
+    const gid = GIDS[name];
+    if(!gid||gid==='0') throw new Error('Sin GID para '+name);
+    return await fetchCSVByGid(SHEET_ID, gid);
   }
-  return m;
+}
+async function loadLinks(){
+  try{
+    const r=await fetch(LINKS_JSON,{cache:'no-store'});
+    if(r.ok){
+      const j=await r.json();
+      if(j?.items) LINKMAP=j.items;
+    }
+  }catch(e){ console.warn('No se pudo cargar LINKS_JSON', e); }
 }
 
-/* ====== Trabajo / puntos por alumno ====== */
-function trabajoStatsForStudent(studentId, tri='ALL'){
-  const entAlumno = G_ENTREGAS.filter(t => norm(t.id) === norm(studentId));
-  const uids   = new Map(entAlumno.filter(t => t.uidPreset).map(t => [t.uidPreset, t]));
-  const claves = new Map(entAlumno.filter(t => !t.uidPreset).map(t => [
-    [norm(t.materia), norm(String(t.numero).replace(/^trabajo\s*/i,'')),
-     norm(t.origen),  norm(t.pagina), normDate(t.fechaObjetivo)].join('|'), t
-  ]));
-  const pres = (tri==='ALL') ? G_PRESETS : G_PRESETS.filter(p => String(p.momento||'').toUpperCase()===tri);
-
-  let hechos=0, total=pres.length, puntos=0, puntosMax=0;
-  for (const p of pres){
-    const kbase = [norm(p.materia), norm(String(p.numero).replace(/^trabajo\s*/i,'')),
-                   norm(p.origen),  norm(p.pagina), normDate(p.fechaObjetivo)].join('|');
-    const key = p.uid ? `uid:${p.uid}` : `k:${kbase}`;
-    const maxPtsForPreset = G_MAXPTS?.get(key) || 0;
-    puntosMax += maxPtsForPreset;
-
-    let e = uids.get(p.uid);
-    if (!e){
-      const k = kbase;
-      e = claves.get(k);
-    }
-    if (e){
-      hechos++;
-      puntos += (+e.puntos||0);
+/* ====== TOPS ====== */
+function triRangeFromPresets(presets, tri){
+  if(tri==='ALL') return {start:SCHOOL_YEAR_START, end:ymd(TODAY)};
+  const items = presets.filter(p => String(p.momento||'').toUpperCase()===tri && normDate(p.fechaObjetivo));
+  if(!items.length) return {start:SCHOOL_YEAR_START, end:ymd(TODAY)};
+  const ds = items.map(p => new Date(normDate(p.fechaObjetivo))).sort((a,b)=>a-b);
+  return {start: ymd(ds[0]), end: ymd(ds[ds.length-1])};
+}
+function computeMaxPointsByPreset(entregas, presets, tri){
+  const ids = new Set(presets.filter(p=> tri==='ALL' || String(p.momento||'').toUpperCase()===tri).map(p=>p.uid));
+  const map = {};
+  for(const e of entregas){
+    if(e.uidPreset && ids.has(e.uidPreset)){
+      if(!map[e.uidPreset] || e.puntos>map[e.uidPreset]) map[e.uidPreset]=e.puntos||0;
     }
   }
-  const pct = total ? Math.round(hechos/total*100) : 0;
-  return {hechos,total,pct,puntos,puntosMax};
+  const defaultMax = 10;
+  const totalMax = Array.from(ids).reduce((s,uid)=> s + (map[uid] ?? defaultMax), 0);
+  return { map, totalMax };
 }
+function computeTopStats(asis, entregas, presets, tri){
+  const presetTri = presets.filter(p=> tri==='ALL' || String(p.momento||'').toUpperCase()===tri);
+  const presetIds = new Set(presetTri.map(p=>p.uid));
+  const worksTotal = presetTri.length;
+  const {start,end} = triRangeFromPresets(presets, tri);
+  const ptsInfo = computeMaxPointsByPreset(entregas, presets, tri);
 
-/* ====== Leaderboards ====== */
-function buildLeaderboards(tri='ALL'){
-  if(!G_ASIS || !G_PRESETS.length) return {asis:[],trab:[],total:[]};
-  const [startISO,endISO] = triDateRange(tri, G_ASIS.cols, G_PRESETS);
+  const iId  = findIDColumn(asis.cols, asis.rows);
+  const iNom = asis.cols.findIndex(c=>/^nombre/i.test(String(c||'')));
+  const byStu = new Map();
 
-  const arr = STUDENTS.map(s=>{
-    let present=0, totalDays=0, asisPct=0;
-    try{
-      const a = asistenciaAlumno(G_ASIS.cols, G_ASIS.rows, {id:s.id, nombre:s.nombre}, startISO, endISO, {excludeWeekends:true});
-      present = a.present; totalDays = a.total; asisPct = totalDays ? Math.round(present/totalDays*100) : 0;
-    }catch{}
-    let hechos=0, totalTrab=0, trabPct=0, puntos=0, puntosMax=0;
-    try{
-      const t = trabajoStatsForStudent(s.id, tri);
-      hechos = t.hechos; totalTrab = t.total; trabPct = t.pct; puntos = t.puntos; puntosMax = t.puntosMax;
-    }catch{}
-    const totalScore = Math.round((asisPct + trabPct)/2);
-    return { id:s.id, nombre:s.nombre,
-             present, totalDays, asisPct,
-             hechos, totalTrab, trabPct,
-             puntos, puntosMax,
-             totalScore };
-  });
-
-  const byAsis = [...arr].sort((a,b)=> b.asisPct - a.asisPct || a.nombre.localeCompare(b.nombre,'es'));
-  const byTrab = [...arr].sort((a,b)=> b.trabPct - a.trabPct || a.nombre.localeCompare(b.nombre,'es'));
-  const byTotal= [...arr].sort((a,b)=> b.totalScore - a.totalScore || a.nombre.localeCompare(b.nombre,'es'));
-
-  return {
-    asis: byAsis.slice(0,7),
-    trab: byTrab.slice(0,7),
-    total: byTotal.slice(0,7)
-  };
-}
-function renderTopList(hostId, items, kind){
-  const host = $(hostId);
-  if(!items || !items.length){ host.innerHTML = '<div class="hint">Sin datos</div>'; return; }
-  const fmt = (it, i) => {
-    const val = kind==='asis' ? `${it.asisPct}%` : (kind==='trab' ? `${it.trabPct}%` : `${it.totalScore}%`);
-    const badge = kind==='asis' ? 'Asistencia' : (kind==='trab' ? 'Trabajos' : 'Total');
-    const extra = (kind==='total')
-      ? `<div class="mini">Asis ${it.present}/${it.totalDays} · Trab ${it.hechos}/${it.totalTrab} · Pts ${it.puntos}/${it.puntosMax}</div>`
-      : '';
-    return `<div class="sg-item" style="align-items:flex-start">
-      <div>
-        <div><b>${i+1}.</b> ${it.nombre}${extra}</div>
-      </div>
-      <span class="tag">${val} · ${badge}</span>
-    </div>`;
-  };
-  host.innerHTML = items.map((it,i)=>fmt(it,i)).join('');
-}
-function renderLeaderboards(){
-  if(!STUDENTS.length || !G_ASIS){
-    $('#top-asistencia').innerHTML = '<div class="hint">Cargando…</div>';
-    $('#top-trabajos').innerHTML   = '<div class="hint">Cargando…</div>';
-    $('#top-total').innerHTML      = '<div class="hint">Cargando…</div>';
-    return;
+  for(const e of entregas){
+    if(!e.id) continue;
+    if(tri!=='ALL' && String(e.momento||'').toUpperCase()!==tri) continue;
+    if(e.uidPreset && presetIds.size && !presetIds.has(e.uidPreset)) continue;
+    let m = byStu.get(e.id); if(!m){ m=new Map(); byStu.set(e.id,m); }
+    const k = e.uidPreset || [norm(e.materia), norm(String(e.numero).replace(/^trabajo\s*/i,'')),
+                              norm(e.origen), norm(e.pagina), normDate(e.fechaObjetivo)].join('|');
+    const prev = m.get(k);
+    if(!prev || (e.puntos||0)>(prev.puntos||0)) m.set(k,e);
   }
-  const tops = buildLeaderboards(TRI);
-  renderTopList('#top-asistencia', tops.asis, 'asis');
-  renderTopList('#top-trabajos',   tops.trab, 'trab');
-  renderTopList('#top-total',      tops.total,'total');
+
+  const stats=[];
+  for(const row of asis.rows){
+    const id = String(row[iId]||'').trim();
+    const nombre = String(row[iNom]||'').trim();
+    if(!id || !nombre) continue;
+
+    const a = asistenciaAlumno(asis.cols, asis.rows, {id, nombre}, start, end, {excludeWeekends:true});
+    const ent = byStu.get(id);
+    const done = ent ? Array.from(ent.values()).length : 0;
+    const puntos = ent ? Array.from(ent.values()).reduce((s,e)=> s + (e.puntos||0), 0) : 0;
+
+    const asistPct = a.total ? a.present/a.total : 0;
+    const trabPct  = worksTotal ? done/worksTotal : 0;
+    const ptsPct   = ptsInfo.totalMax ? puntos/ptsInfo.totalMax : 0;
+    const score = TOP_WEIGHTS.asistencia*asistPct + TOP_WEIGHTS.trabajos*trabPct + TOP_WEIGHTS.puntos*ptsPct;
+
+    stats.push({
+      id, nombre,
+      asist_present:a.present, asist_total:a.total,
+      trab_done:done, trab_total:worksTotal,
+      pts:puntos, pts_total:ptsInfo.totalMax,
+      asist_pct:asistPct, trab_pct:trabPct, pts_pct:ptsPct, score
+    });
+  }
+  return stats;
+}
+function renderTopList(hostId, arr, fmt){
+  const host=$(hostId);
+  host.innerHTML = arr.slice(0,7).map(s=>`
+    <div class="ritem">
+      <span><b>${s.nombre}</b> <span class="mono">${s.id}</span></span>
+      <span class="rmeta">${fmt(s)}</span>
+    </div>`).join('');
+}
+function refreshTops(asis, entregas, presets){
+  $('#tops-card').style.display='block';
+  const stats = computeTopStats(asis, entregas, presets, TRI);
+  const byAsist = [...stats].sort((a,b)=> b.asist_pct - a.asist_pct || a.nombre.localeCompare(b.nombre,'es'));
+  const byTrab  = [...stats].sort((a,b)=> b.trab_pct  - a.trab_pct  || a.nombre.localeCompare(b.nombre,'es'));
+  const byTotal = [...stats].sort((a,b)=> b.score     - a.score     || a.nombre.localeCompare(b.nombre,'es'));
+
+  renderTopList('#top-asist', byAsist, s=> `${Math.round(s.asist_pct*100)}% · A ${s.asist_present}/${s.asist_total} d`);
+  renderTopList('#top-trab',  byTrab,  s=> `${Math.round(s.trab_pct*100)}% · T ${s.trab_done}/${s.trab_total}`);
+  renderTopList('#top-total', byTotal, s=> `${Math.round(s.score*100)} · A ${s.asist_present}/${s.asist_total} · T ${s.trab_done}/${s.trab_total} · P ${s.pts}/${s.pts_total}`);
   const subt = (TRI==='ALL'?'Todo':TRI);
-  $('#tops-sub').innerHTML = `Cálculo con <b>${subt}</b> (puedes cambiar a M1/M2/M3 desde la vista de alumno)`;
+  $('#tops-sub').innerHTML = `Se actualiza con <b>${subt}</b>`;
 }
 
-/* ====== Render por alumno ====== */
+/* ====== Render alumno ====== */
 function setTriChips(){
   const host=$('#tri-chips');
   const opts=[['ALL','Todo'],['M1','M1'],['M2','M2'],['M3','M3']];
   host.innerHTML=opts.map(([v,l])=>`<button class="chip ${TRI===v?'active':''}" data-v="${v}">${l}</button>`).join('');
-  for(const b of host.querySelectorAll('.chip')) b.onclick=()=>{TRI=b.getAttribute('data-v'); setTriChips(); renderLists(); renderLeaderboards(); runWorkSearch();};
+  for(const b of host.querySelectorAll('.chip')) b.onclick=()=>{
+    TRI=b.getAttribute('data-v');
+    setTriChips(); renderLists(); runWorkSearch();
+    if(DATA.asis && DATA.reg && DATA.pre){
+      refreshTops(DATA.asis, parseRegistro(DATA.reg.cols, DATA.reg.rows), parsePresets(DATA.pre.cols, DATA.pre.rows));
+    }
+  };
   $('#tri-subtitle').textContent='Resumen de '+({ALL:'Todo',M1:'Trimestre 1',M2:'Trimestre 2',M3:'Trimestre 3'}[TRI]);
 }
 function byTri(list){ return TRI==='ALL'? list : list.filter(x=>String(x.momento||'').toUpperCase()===TRI); }
 function renderBarChart({faltantes,tarde,atiempo}){
   const max=Math.max(faltantes,tarde,atiempo,1);
   const set=(id,val)=>{ const el=$(id); el.style.setProperty('--pct',(val/max).toFixed(3)); el.querySelector('.val').textContent=val; };
-  set('#bar-fal',faltantes); set('#bar-tar',tarde); set('#val-ati-wrap',atiempo);
-  const elAti=$('#val-ati'); if(elAti) elAti.textContent=atiempo;
+  set('#bar-fal',faltantes); set('#bar-tar',tarde); set('#bar-ati',atiempo);
+  $('#val-ati').textContent = atiempo;
 }
 function linksFor(uid){
   const rec = LINKMAP?.[uid];
@@ -724,7 +703,6 @@ function renderItem(t){
     <summary><b>${t.materia||'–'}</b> — ${t.numero||'–'} (${t.origen||'–'}${t.pagina?' · p.'+t.pagina:''})${nom}${the_fecha}${mom}${kLink? ' ' + kLink : ''}</summary>
   </details>`;
 }
-/* NUEVO: render con separadores por materia */
 function renderGrouped(list){
   if(!list.length) return '<div class="hint">Sin elementos</div>';
   const map = new Map();
@@ -760,20 +738,13 @@ async function cargarAlumnoPorID(id){
   $('#alumno-nombre').textContent='Cargando…'; $('#alumno-id').textContent='';
 
   await loadLinks();
-  const asis = G_ASIS || await loadBlock('asistencia');
-  if(!G_ASIS) G_ASIS = asis;
-
-  if (!G_ENTREGAS.length || !G_PRESETS.length){
-    const [regBlock, preBlock] = await Promise.all([loadBlock('registro'), loadBlock('presets')]);
-    G_ENTREGAS = parseRegistro(regBlock.cols, regBlock.rows);
-    G_PRESETS  = parsePresets(preBlock.cols, preBlock.rows);
-    G_MAXPTS   = buildMaxPointsIndex();
-  }
+  const [asis, reg, pre] = await Promise.all([loadBlock('asistencia'), loadBlock('registro'), loadBlock('presets')]);
+  DATA.asis = asis; DATA.reg = reg; DATA.pre = pre;
 
   if (!STUDENTS.length){ STUDENTS = buildStudentIndexFromAsis(asis); renderAllList(); }
 
-  const entregas = G_ENTREGAS;
-  const presets  = G_PRESETS;
+  const entregas = parseRegistro(reg.cols, reg.rows);
+  const presets  = parsePresets(pre.cols, pre.rows);
   let entAlumno  = entregas.filter(t => norm(t.id) === norm(id));
   const nombreDeRegistro = entAlumno.find(e => e.nombre)?.nombre || '';
 
@@ -827,14 +798,70 @@ async function cargarAlumnoPorID(id){
   $('#stat-faltHist').textContent = ah.total ? `${ah.total - ah.present}` : '–';
 
   TRI='ALL'; setTriChips(); renderLists();
-  renderLeaderboards();
-  runWorkSearch(); // refresca buscador según ámbito
+  refreshTops(asis, entregas, presets);
+  runWorkSearch();
 
   $('#student-view').style.display='block';
   window.scrollTo({top:document.body.offsetTop, behavior:'smooth'});
 }
 
-/* ====== BUSCADOR / LISTA COMPLETA / NAV ====== */
+/* ====== BUSCADOR (General/Alumno) ====== */
+let SEARCH_SCOPE='AUTO'; // AUTO | GENERAL | ALUMNO
+function setScope(scope){
+  SEARCH_SCOPE = scope;
+  document.querySelectorAll('#scope-chips .scope-chip').forEach(b=> b.classList.toggle('active', b.getAttribute('data-scope')===scope));
+  const hint = scope==='GENERAL' ? 'Ámbito: <b>General</b>. Busca en todos los presets.'
+             : scope==='ALUMNO'  ? 'Ámbito: <b>Alumno</b>. Busca en los <b>faltantes</b> del alumno abierto.'
+             : 'Ámbito: <b>Auto</b>. Si hay alumno abierto, busca en sus faltantes; si no, busca en todos los presets.';
+  $('#workSearchHint').innerHTML = hint;
+  runWorkSearch();
+}
+$('#scope-chips').addEventListener('click', (e)=>{
+  const btn=e.target.closest('.scope-chip'); if(!btn) return;
+  setScope(btn.getAttribute('data-scope'));
+});
+$('#clearWorkSearch').onclick=()=>{ $('#workSearchInput').value=''; runWorkSearch(); };
+
+function tokensOf(q){ return norm(q).split(/\s+/).filter(Boolean); }
+function searchableText(p){ return norm([p.materia, p.nombreTrabajo, p.momento, p.numero, p.origen, p.pagina].filter(Boolean).join(' ')); }
+function matchPreset(p, toks){ const hay = searchableText(p); return toks.every(t => hay.includes(t)); }
+function renderSearchItem(p){
+  const fecha = p.fechaObjetivo ? normDate(p.fechaObjetivo) : '–';
+  const nom   = p.nombreTrabajo ? ` · <i>${p.nombreTrabajo}</i>` : '';
+  const mom   = p.momento ? `<span class="tag">${p.momento}</span>` : '';
+  return `<div class="sg-item"><span><b>${p.materia||'–'}</b> — ${p.numero||'–'}${nom} ${mom}</span><span class="tag">F. Obj ${fecha}</span></div>`;
+}
+function effectiveScope(){
+  if(SEARCH_SCOPE!=='AUTO') return SEARCH_SCOPE;
+  const sv = $('#student-view'); const alumnoAbierto = sv && sv.style.display!=='none';
+  return alumnoAbierto ? 'ALUMNO' : 'GENERAL';
+}
+function runWorkSearch(){
+  const q = $('#workSearchInput').value || '';
+  const toks = tokensOf(q);
+  const scope = effectiveScope();
+  const host = $('#workSearchResults');
+  host.innerHTML = '';
+
+  if(!toks.length){ host.innerHTML = '<div class="search-empty">Escribe para buscar…</div>'; return; }
+
+  if(scope==='GENERAL'){
+    if(!DATA.pre){ host.innerHTML = '<div class="search-empty">Aún no se cargaron los presets.</div>'; return; }
+    const base = parsePresets(DATA.pre.cols, DATA.pre.rows);
+    const list = TRI==='ALL'? base : base.filter(p => String(p.momento||'').toUpperCase()===TRI);
+    const res = list.filter(p => matchPreset(p, toks));
+    host.innerHTML = res.length ? res.map(renderSearchItem).join('') : '<div class="search-empty">Sin coincidencias en presets.</div>';
+  }else{
+    const base = byTri(ALL.faltantes);
+    if(!base.length){ host.innerHTML = '<div class="search-empty">No hay faltantes (o no hay alumno abierto).</div>'; return; }
+    const res = base.filter(p => matchPreset(p, toks));
+    host.innerHTML = res.length ? res.map(renderSearchItem).join('') : '<div class="search-empty">Sin coincidencias en faltantes del alumno.</div>';
+  }
+}
+$('#workSearchInput').addEventListener('input', debounce(runWorkSearch, 200));
+function debounce(fn, ms){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
+
+/* ====== NAV / BUSCADOR ALUMNO ====== */
 let SG_VISIBLE=false;
 function hideSG(){ SG_VISIBLE=false; $('#sgBox').style.display='none'; }
 function showSG(items){
@@ -853,7 +880,6 @@ function filterSG(q){
   if(!best.length){ hideSG(); return; }
   showSG(best);
 }
-
 function openById(id){
   if(!id){ alert('Falta ID'); return; }
   const idx = STUDENTS.findIndex(s=>s.id===id);
@@ -868,7 +894,6 @@ function openStudentByIndex(i){
   localStorage.setItem('docente_last', s.nombre);
   openById(s.id);
 }
-
 $('#saveBtn').onclick=()=>{const v=$('#searchInput').value.trim(); if(!v){alert('Escribe nombre o ID.'); return;} localStorage.setItem('docente_last',v); alert('Listo. Guardado.');};
 $('#openBtn').onclick=()=>{
   const q=$('#searchInput').value.trim();
@@ -883,16 +908,13 @@ $('#openBtn').onclick=()=>{
 };
 $('#searchInput').addEventListener('input', e=>filterSG(e.target.value));
 document.addEventListener('click', e=>{ if(!$('#sgBox').contains(e.target) && e.target!==$('#searchInput')) hideSG(); });
-
 $('#listAllBtn').onclick=()=>{
   const el=$('#allList');
   if(!STUDENTS.length){ alert('Aún no se cargan alumnos. Revisa acceso a la hoja Asistencia.'); return; }
   el.style.display = (el.style.display==='none' || !el.style.display) ? 'block' : 'none';
 };
-
 $('#prevBtn').onclick=()=>{ if(CURRENT_INDEX<=0) return; openStudentByIndex(CURRENT_INDEX-1); };
 $('#nextBtn').onclick=()=>{ if(CURRENT_INDEX<0 || CURRENT_INDEX>=STUDENTS.length-1) return; openStudentByIndex(CURRENT_INDEX+1); };
-
 $('#backBtn')?.addEventListener('click',()=>{ $('#student-view').style.display='none'; window.scrollTo({top:0,behavior:'smooth'}); });
 
 /* ====== TEMA ====== */
@@ -901,104 +923,32 @@ function applyTheme(t){document.documentElement.setAttribute('data-theme', t); t
 applyTheme(localStorage.getItem('docente_theme')||'light');
 themeBtn.onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
 
-/* ====== BUSCADOR DE TRABAJOS (General/Alumno) ====== */
-let SEARCH_SCOPE='AUTO'; // AUTO | GENERAL | ALUMNO
-function setScope(scope){
-  SEARCH_SCOPE = scope;
-  document.querySelectorAll('#scope-chips .scope-chip').forEach(b=> b.classList.toggle('active', b.getAttribute('data-scope')===scope));
-  const hint = scope==='GENERAL' ? 'Ámbito: <b>General</b>. Busca en todos los presets.'
-             : scope==='ALUMNO'  ? 'Ámbito: <b>Alumno</b>. Busca en los <b>faltantes</b> del alumno abierto.'
-             : 'Ámbito: <b>Auto</b>. Si hay alumno abierto, busca en sus faltantes; si no, busca en todos los presets.';
-  $('#workSearchHint').innerHTML = hint;
-  runWorkSearch();
-}
-$('#scope-chips').addEventListener('click', (e)=>{
-  const btn=e.target.closest('.scope-chip'); if(!btn) return;
-  setScope(btn.getAttribute('data-scope'));
-});
-$('#clearWorkSearch').onclick=()=>{ $('#workSearchInput').value=''; runWorkSearch(); };
-
-function tokensOf(q){
-  return norm(q).split(/\s+/).filter(Boolean);
-}
-function searchableText(p){
-  return norm([p.materia, p.nombreTrabajo, p.momento, p.numero, p.origen, p.pagina].filter(Boolean).join(' '));
-}
-function matchPreset(p, toks){
-  const hay = searchableText(p);
-  // todos los tokens deben aparecer (búsqueda generosa)
-  return toks.every(t => hay.includes(t));
-}
-function renderSearchItem(p){
-  const fecha = p.fechaObjetivo ? normDate(p.fechaObjetivo) : '–';
-  const nom   = p.nombreTrabajo ? ` · <i>${p.nombreTrabajo}</i>` : '';
-  const mom   = p.momento ? `<span class="tag">${p.momento}</span>` : '';
-  return `<div class="sg-item">
-    <span><b>${p.materia||'–'}</b> — ${p.numero||'–'}${nom} ${mom}</span>
-    <span class="tag">F. Obj ${fecha}</span>
-  </div>`;
-}
-function effectiveScope(){
-  if(SEARCH_SCOPE!=='AUTO') return SEARCH_SCOPE;
-  const sv = $('#student-view');
-  const alumnoAbierto = sv && sv.style.display!=='none';
-  return alumnoAbierto ? 'ALUMNO' : 'GENERAL';
-}
-function runWorkSearch(){
-  const q = $('#workSearchInput').value || '';
-  const toks = tokensOf(q);
-  const scope = effectiveScope();
-  const host = $('#workSearchResults');
-  host.innerHTML = '';
-
-  if(!toks.length){
-    host.innerHTML = '<div class="search-empty">Escribe para buscar…</div>';
-    return;
-  }
-
-  if(scope==='GENERAL'){
-    if(!G_PRESETS.length){
-      host.innerHTML = '<div class="search-empty">Aún no se cargan los presets.</div>'; return;
-    }
-    const base = G_PRESETS;
-    const res = base.filter(p => matchPreset(p, toks));
-    host.innerHTML = res.length ? res.map(renderSearchItem).join('') : '<div class="search-empty">Sin coincidencias en presets.</div>';
-  }else{ // ALUMNO
-    const base = byTri(ALL.faltantes); // solo faltantes y respeta el trimestre actual
-    if(!base.length){
-      host.innerHTML = '<div class="search-empty">No hay faltantes que coincidan (o no hay alumno abierto).</div>'; return;
-    }
-    const res = base.filter(p => matchPreset(p, toks));
-    host.innerHTML = res.length ? res.map(renderSearchItem).join('') : '<div class="search-empty">Sin coincidencias en faltantes del alumno.</div>';
-  }
-}
-$('#workSearchInput').addEventListener('input', debounce(runWorkSearch, 200));
-function debounce(fn, ms){
-  let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
-}
-
 /* ====== START ====== */
 (async function init(){
   await loadLinks();
   try{
-    const [asis, reg, pre] = await Promise.all([loadBlock('asistencia'), loadBlock('registro'), loadBlock('presets')]);
-    G_ASIS = asis;
-    G_ENTREGAS = parseRegistro(reg.cols, reg.rows);
-    G_PRESETS  = parsePresets(pre.cols, pre.rows);
-    G_MAXPTS   = buildMaxPointsIndex();
-
+    const asis = await loadBlock('asistencia');
+    DATA.asis = asis;
     STUDENTS = buildStudentIndexFromAsis(asis);
     renderAllList();
-    renderLeaderboards();
-  }catch(e){
-    console.warn('No se pudo leer datos para tops', e);
-  }
+
+    const [reg, pre] = await Promise.all([loadBlock('registro'), loadBlock('presets')]);
+    DATA.reg = reg; DATA.pre = pre;
+
+    refreshTops(asis, parseRegistro(reg.cols, reg.rows), parsePresets(pre.cols, pre.rows));
+    $('#tops-card').style.display='block';
+  }catch(e){ console.warn('No se pudo leer datos', e); }
+
   const last = localStorage.getItem('docente_last');
   if(last) $('#searchInput').value = last;
 
-  setScope('AUTO'); // inicia en Auto
+  setScope('AUTO');
 })();
-$('#recalcTopsBtn').onclick = ()=>renderLeaderboards();
+$('#recalcTopsBtn').onclick = ()=>{
+  if(DATA.asis && DATA.reg && DATA.pre){
+    refreshTops(DATA.asis, parseRegistro(DATA.reg.cols, DATA.reg.rows), parsePresets(DATA.pre.cols, DATA.pre.rows));
+  }
+};
 </script>
 </body>
 </html>
