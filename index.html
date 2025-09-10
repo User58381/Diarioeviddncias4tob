@@ -367,7 +367,7 @@ function parseHeaderDateLabel(lbl){
     const k = m[2].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const key = k.startsWith('sept') ? 'sept' : k.slice(0,3);
     const mi = MONTHS_ES[key];
-    if (mi!=null){ const d = new Date(+m[3], mi, +m[1]); if (!isNaN(+d)) return { iso: ymd(d), date: d }; }
+    if (mi!=null){ const d = new Date(+m[3], mi, +m[1]); if (!isNaN(+d)) return { iso: ymd(d), date: new Date(d.getFullYear(), d.getMonth(), d.getDate()) }; }
   }
   const d = new Date(r);
   return isNaN(+d) ? null : { iso: ymd(d), date: new Date(d.getFullYear(), d.getMonth(), d.getDate()) };
@@ -591,7 +591,6 @@ function renderTopList(hostId, arr, fmt){
     </div>`).join('');
 }
 function refreshTops(asis, entregas, presets){
-  $('#tops-card').display='block';
   const stats = computeTopStats(asis, entregas, presets, TRI);
   const byAsist = [...stats].sort((a,b)=> b.asist_pct - a.asist_pct || a.nombre.localeCompare(b.nombre,'es'));
   const byTrab  = [...stats].sort((a,b)=> b.trab_pct  - a.trab_pct  || a.nombre.localeCompare(b.nombre,'es'));
@@ -609,6 +608,7 @@ function refreshTops(asis, entregas, presets){
 function setTriChips(){
   const host=$('#tri-chips');
   const opts=[['ALL','Todo'],['M1','M1'],['M2','M2'],['M3','M3']];
+
   host.innerHTML=opts.map(([v,l])=>`<button class="chip ${TRI===v?'active':''}" data-v="${v}">${l}</button>`).join('');
   for(const b of host.querySelectorAll('.chip')) b.onclick=()=>{
     TRI=b.getAttribute('data-v');
@@ -677,24 +677,99 @@ let TRI='ALL';
 let CURRENT_INDEX=-1;
 let DATA = { asis:null, reg:null, pre:null };
 
-async function loadBlock(name){
-  const names = {asistencia:'Asistencia', registro:'Registro de trabajos', presets:'Presets'};
-  try{ return await fetchGViz(SHEET_ID, names[name]); }
-  catch{
-    const gid = GIDS[name];
-    if(!gid||gid==='0') throw new Error('Sin GID para '+name);
-    return await fetchCSVByGid(SHEET_ID, gid);
+/* === NUEVO: claves de emparejo y función para abrir alumno === */
+function keyFromPreset(p){
+  return [ norm(p.materia),
+           norm(String(p.numero||'').replace(/^trabajo\s*/i,'')),
+           norm(p.origen),
+           norm(p.pagina),
+           normDate(p.fechaObjetivo) ].join('|');
+}
+function keyFromEntrega(e){
+  return e.uidPreset || [ norm(e.materia),
+                          norm(String(e.numero||'').replace(/^trabajo\s*/i,'')),
+                          norm(e.origen),
+                          norm(e.pagina),
+                          normDate(e.fechaObjetivo) ].join('|');
+}
+
+async function cargarAlumnoPorID(id){
+  if(!DATA.asis || !DATA.reg || !DATA.pre){
+    alert('Aún no se cargan Asistencia/Registro/Presets.'); return;
   }
-}
-async function loadLinks(){
-  try{
-    const r=await fetch(LINKS_JSON,{cache:'no-store'});
-    if(r.ok){
-      const j=await r.json();
-      if(j?.items) LINKMAP=j.items;
+
+  // Datos básicos del alumno
+  const stu = STUDENTS.find(s=>s.id===id) || (() => {
+    const iId  = findIDColumn(DATA.asis.cols, DATA.asis.rows);
+    const iNom = DATA.asis.cols.findIndex(c=>/^nombre/i.test(String(c||'')));
+    const row  = DATA.asis.rows.find(r => String(r?.[iId]||'').trim()===id);
+    return { id, nombre: row ? String(row[iNom]||'').trim() : id };
+  })();
+
+  // Pintar encabezado
+  $('#alumno-nombre').textContent = stu.nombre;
+  $('#alumno-id').textContent     = stu.id;
+  $('#grupo-label').textContent   = GROUP_LABEL;
+
+  // Parseo de hojas
+  const presets = parsePresets(DATA.pre.cols, DATA.pre.rows);
+  const entregasAlumno = parseRegistro(DATA.reg.cols, DATA.reg.rows)
+    .filter(e => norm(e.id) === norm(id));
+
+  // Mejor entrega por "trabajo" (mayor puntaje)
+  const bestByKey = new Map();
+  for (const e of entregasAlumno){
+    const k = keyFromEntrega(e);
+    const cur = bestByKey.get(k);
+    if(!cur || (e.puntos||0) > (cur.puntos||0)) bestByKey.set(k, e);
+  }
+
+  // Clasificación frente a cada preset
+  const faltantes = [], tarde = [], atiempo = [];
+  for (const p of presets){
+    const kPreset = p.uid || keyFromPreset(p);
+    let e = null;
+    if (p.uid){
+      const matches = entregasAlumno.filter(x => x.uidPreset === p.uid);
+      if (matches.length){
+        e = matches.sort((a,b)=>(b.puntos||0)-(a.puntos||0))[0];
+      }
     }
-  }catch(e){ console.warn('No se pudo cargar LINKS_JSON', e); }
+    if (!e){ e = bestByKey.get(keyFromPreset(p)) || null; }
+
+    const item = { ...p, uid: p.uid };
+    if (e){
+      (e.atrasoDias>0 ? tarde : atiempo).push(item);
+    } else {
+      faltantes.push(item);
+    }
+  }
+
+  ALL = { faltantes, tarde, atiempo, presets };
+
+  // Asistencia (semana, 30 días, e histórica)
+  const [wStart, wEnd] = weekRange(new Date());
+  const asW  = asistenciaAlumno(DATA.asis.cols, DATA.asis.rows, {id, nombre:stu.nombre}, wStart, wEnd, {excludeWeekends:true});
+  const d30  = new Date(); d30.setDate(d30.getDate()-29);
+  const as30 = asistenciaAlumno(DATA.asis.cols, DATA.asis.rows, {id, nombre:stu.nombre}, ymd(d30), ymd(TODAY), {excludeWeekends:true});
+  const hist = asistenciaHistorica(DATA.asis.cols, DATA.asis.rows, {id, nombre:stu.nombre}, {excludeWeekends:true});
+
+  $('#stat-aswk').textContent     = asW.total  ? `${asW.present}/${asW.total}` : '–';
+  $('#stat-as30').textContent     = as30.total ? `${as30.present}/${as30.total}` : '–';
+  $('#stat-asHist').textContent   = hist.total ? `${hist.present}/${hist.total}` : '–';
+  $('#stat-faltHist').textContent = hist.total ? `${(hist.total - hist.present)}` : '–';
+
+  // Render UI
+  setTriChips();
+  renderLists();
+  $('#student-view').style.display = 'block';
+  document.querySelector('#student-view').scrollIntoView({behavior:'smooth', block:'start'});
+
+  // Ajustar buscador al contexto del alumno
+  runWorkSearch();
 }
+
+/* ====== Índice de alumnos y lista ====== */
 let STUDENTS = [];
 function buildStudentIndexFromAsis(asis){
   const iId  = findIDColumn(asis.cols, asis.rows);
@@ -751,12 +826,12 @@ function tokensOf(q){ return norm(q).split(/\s+/).filter(Boolean); }
 function searchableText(p){ return norm([p.materia, p.nombreTrabajo, p.momento, p.numero, p.origen, p.pagina].filter(Boolean).join(' ')); }
 function matchPreset(p, toks){ const hay = searchableText(p); return toks.every(t => hay.includes(t)); }
 
-/* >>> CAMBIO AQUÍ: incluir enlaces de evidencias en resultados del buscador <<< */
+/* Incluir enlaces de evidencias en resultados del buscador */
 function renderSearchItem(p){
   const fecha = p.fechaObjetivo ? normDate(p.fechaObjetivo) : '–';
   const nom   = p.nombreTrabajo ? ` · <i>${p.nombreTrabajo}</i>` : '';
   const mom   = p.momento ? `<span class="tag">${p.momento}</span>` : '';
-  const kLink = linksFor(p.uid); // usa LINKS_JSON.items[uid] si existe
+  const kLink = linksFor(p.uid);
   return `<div class="sg-item">
     <span><b>${p.materia||'–'}</b> — ${p.numero||'–'}${nom} ${mom}</span>
     <span class="tag">F. Obj ${fecha}</span>
@@ -857,6 +932,16 @@ applyTheme(localStorage.getItem('docente_theme')||'light');
 themeBtn.onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
 
 /* ====== START ====== */
+async function loadLinks(){
+  try{
+    const r=await fetch(LINKS_JSON,{cache:'no-store'});
+    if(r.ok){
+      const j=await r.json();
+      if(j?.items) LINKMAP=j.items;
+    }
+  }catch(e){ console.warn('No se pudo cargar LINKS_JSON', e); }
+}
+
 (async function init(){
   await loadLinks();
   try{
