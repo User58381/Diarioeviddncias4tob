@@ -248,7 +248,7 @@
   </section>
 </main>
 
-<!-- La PARTE 2/2 contiene todo el <script> con la lógica corregida -->
+<!-- ====== PARTE 1/2: script (primera mitad) ====== -->
 <script>
 /* ====== CONFIG (tu Drive) ====== */
 let SHEET_ID = '1SWtGmXlf7WbNvUlJBDktXpDcq5OfJkHE75bH5nkxurk';
@@ -443,6 +443,8 @@ function parseRegistro(cols,rows){
     };
   });
 }
+
+/* >>>>>> ACTUALIZADO: lee URL/Hoja de evidencia de la hoja "Presets" <<<<<< */
 function parsePresets(cols,rows){
   const iUID=cols.findIndex(c=>/uid[_ ]?[_ ]?preset/i.test(String(c)));
   const iFO=cols.findIndex(c=>/fecha.*objetivo/i.test(String(c)));
@@ -452,11 +454,22 @@ function parsePresets(cols,rows){
   const iOri=cols.findIndex(c=>/^origen$/i.test(String(c)));
   const iPag=cols.findIndex(c=>/^p[aá]gina/i.test(String(c)));
   const iNom=cols.findIndex(c=>/nombre.*trabajo/i.test(String(c)));
-  return rows.map(r=>({uid:String((iUID>=0?r[iUID]:'')??'').trim(),
-    fechaObjetivo:String((iFO>=0?r[iFO]:'')??'').trim(), momento:String((iMom>=0?r[iMom]:'')??'').trim(),
-    materia:String((iMat>=0?r[iMat]:'')??'').trim(), numero:String((iNum>=0?r[iNum]:'')??'').trim(),
-    origen:String((iOri>=0?r[iOri]:'')??'').trim(), pagina:String((iPag>=0?r[iPag]:'')??'').trim(),
-    nombreTrabajo:String((iNom>=0?r[iNom]:'')??'').trim()})).filter(p=>p.uid);
+  // Nuevas detecciones tolerantes:
+  const iEUrl=cols.findIndex(c=>/url.*(evidenc|foto|imagen|evidence)/i.test(String(c)));
+  const iESh =cols.findIndex(c=>/(hoja|sheet).*(evidenc|foto|imagen|evidence)/i.test(String(c)));
+
+  return rows.map(r=>({
+    uid:String((iUID>=0?r[iUID]:'')??'').trim(),
+    fechaObjetivo:String((iFO>=0?r[iFO]:'')??'').trim(),
+    momento:String((iMom>=0?r[iMom]:'')??'').trim(),
+    materia:String((iMat>=0?r[iMat]:'')??'').trim(),
+    numero:String((iNum>=0?r[iNum]:'')??'').trim(),
+    origen:String((iOri>=0?r[iOri]:'')??'').trim(),
+    pagina:String((iPag>=0?r[iPag]:'')??'').trim(),
+    nombreTrabajo:String((iNom>=0?r[iNom]:'')??'').trim(),
+    evidUrl:String((iEUrl>=0?r[iEUrl]:'')??'').trim(),
+    evidSheet:String((iESh>=0?r[iESh]:'')??'').trim(),
+  })).filter(p=>p.uid);
 }
 
 /* ====== ASISTENCIA ====== */
@@ -600,10 +613,10 @@ function refreshTops(asis, entregas, presets){
   renderTopList('#top-total', byTotal, s=> `${Math.round(s.score*100)} · A ${s.asist_present}/${s.asist_total} · T ${s.trab_done}/${s.trab_total} · P ${s.pts}/${s.pts_total}`);
   const subt = (TRI==='ALL'?'Todo':TRI);
   $('#tops-sub').innerHTML = `Se actualiza con <b>${subt}</b>`;
-  $('#tops-card').style.display='block'; // <- fix
+  $('#tops-card').style.display='block';
 }
 
-/* ====== Render alumno ====== */
+/* ====== Render alumno y evidencia ====== */
 function setTriChips(){
   const host=$('#tri-chips');
   const opts=[['ALL','Todo'],['M1','M1'],['M2','M2'],['M3','M3']];
@@ -623,20 +636,27 @@ function renderBarChart({faltantes,tarde,atiempo}){
   const set=(id,val)=>{ const el=$(id); el.style.setProperty('--pct',(val/max).toFixed(3)); el.querySelector('.val').textContent=val; };
   set('#bar-fal',faltantes); set('#bar-tar',tarde); set('#bar-ati',atiempo);
 }
-function linksFor(uid){
+
+/* >>>>>> ACTUALIZADO: fusiona LINKS_JSON + columnas de Sheet para evidencia <<<<<< */
+function linksFor(uid, preset){
+  const urls = [];
   const rec = LINKMAP?.[uid];
-  if(!rec) return '';
-  const arr = Array.isArray(rec.urls) ? rec.urls : (rec.url?[rec.url]:[]);
-  if(!arr.length) return '';
-  return arr.map((u,i)=>`<a class="linkbtn" href="${u}" target="_blank" rel="noopener">📷 Ver evidencia ${arr.length>1?i+1:''}</a>`).join(' ');
+  if (rec) { if (Array.isArray(rec.urls)) urls.push(...rec.urls); else if (rec.url) urls.push(rec.url); }
+  if (preset?.evidUrl) urls.push(String(preset.evidUrl));
+  const uniq = [...new Set(urls.map(u=>String(u||'').trim()).filter(Boolean))];
+  if (!uniq.length) return '';
+  return uniq.map((u,i)=>`<a class="linkbtn" href="${u}" target="_blank" rel="noopener">📷 Ver evidencia ${uniq.length>1?i+1:''}</a>`).join(' ');
 }
+
+/* Item individual con botón(es) de evidencia + hoja (si existe) */
 function renderItem(t){
   const mom = t.momento ? ` · ${t.momento}` : '';
   const the_fecha = t.fechaObjetivo ? ` · ${normDate(t.fechaObjetivo)}` : '';
   const nom = t.nombreTrabajo ? ` · <i>${t.nombreTrabajo}</i>` : '';
-  const kLink = linksFor(t.uid);
+  const kLink = linksFor(t.uid, t);
+  const kSheet = t.evidSheet ? ` <span class="badgeb">📄 ${t.evidSheet}</span>` : '';
   return `<details>
-    <summary><b>${t.materia||'–'}</b> — ${t.numero||'–'} (${t.origen||'–'}${t.pagina?' · p.'+t.pagina:''})${nom}${the_fecha}${mom}${kLink? ' ' + kLink : ''}</summary>
+    <summary><b>${t.materia||'–'}</b> — ${t.numero||'–'} (${t.origen||'–'}${t.pagina?' · p.'+t.pagina:''})${nom}${the_fecha}${mom}${kLink? ' ' + kLink : ''}${kSheet}</summary>
   </details>`;
 }
 function renderGrouped(list){
@@ -668,7 +688,7 @@ function renderLists(){
   $('#atiempo').innerHTML   = ati.length   ? renderGrouped(ati)  : '<div class="hint">Aún no hay entregas registradas</div>';
 }
 
-/* ====== CARGA DE ALUMNO ====== */
+/* ====== CARGA / ESTADO COMPARTIDO (se completa en PARTE 2) ====== */
 let ALL = {faltantes:[], tarde:[], atiempo:[], presets:[]};
 let TRI='ALL';
 let CURRENT_INDEX=-1;
@@ -748,16 +768,17 @@ function tokensOf(q){ return norm(q).split(/\s+/).filter(Boolean); }
 function searchableText(p){ return norm([p.materia, p.nombreTrabajo, p.momento, p.numero, p.origen, p.pagina].filter(Boolean).join(' ')); }
 function matchPreset(p, toks){ const hay = searchableText(p); return toks.every(t => hay.includes(t)); }
 
-/* >>> Resultados del buscador con enlaces de evidencia si existen en LINKMAP <<< */
+/* >>> Resultados del buscador con enlaces de evidencia si existen en LINKMAP o en Sheet <<< */
 function renderSearchItem(p){
   const fecha = p.fechaObjetivo ? normDate(p.fechaObjetivo) : '–';
   const nom   = p.nombreTrabajo ? ` · <i>${p.nombreTrabajo}</i>` : '';
   const mom   = p.momento ? `<span class="tag">${p.momento}</span>` : '';
-  const kLink = linksFor(p.uid);
+  const kLink = linksFor(p.uid, p);
+  const kSheet = p.evidSheet ? ` <span class="badgeb">📄 ${p.evidSheet}</span>` : '';
   return `<div class="sg-item">
     <span><b>${p.materia||'–'}</b> — ${p.numero||'–'}${nom} ${mom}</span>
     <span class="tag">F. Obj ${fecha}</span>
-    ${kLink ? `<span>${kLink}</span>` : ''}
+    ${kLink ? `<span>${kLink}</span>` : ''}${kSheet}
   </div>`;
 }
 function effectiveScope(){
@@ -790,7 +811,7 @@ function runWorkSearch(){
 $('#workSearchInput').addEventListener('input', debounce(runWorkSearch, 200));
 function debounce(fn, ms){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
 
-/* ====== NAV / BUSCADOR ALUMNO ====== */
+/* ====== NAV / BUSCADOR ALUMNO (handlers completos en PARTE 2) ====== */
 let SG_VISIBLE=false;
 function hideSG(){ SG_VISIBLE=false; $('#sgBox').style.display='none'; }
 function showSG(items){
@@ -823,23 +844,12 @@ function openStudentByIndex(i){
   openById(s.id);
 }
 $('#saveBtn').onclick=()=>{const v=$('#searchInput').value.trim(); if(!v){alert('Escribe nombre o ID.'); return;} localStorage.setItem('docente_last',v); alert('Listo. Guardado.');};
-$('#openBtn').onclick=()=>{
-  const q=$('#searchInput').value.trim();
-  if(!q){ alert('Escribe nombre o ID.'); return; }
-  const m=q.toUpperCase().match(/^ID[A-Z0-9]{6,}$/);
-  if(m){ openById(m[0]); return; }
-  const t=norm(q);
-  let hit = STUDENTS.find(s => norm(s.nombre)===t);
-  if(!hit) hit = STUDENTS.find(s => norm(s.nombre).includes(t));
-  if(!hit){ alert('No hallé ese alumno. Prueba otra parte del nombre o pega el ID.'); return; }
-  openById(hit.id);
-};
+$('#openBtn').onclick=()=>{/* continúa en PARTE 2 */};
 $('#searchInput').addEventListener('input', e=>filterSG(e.target.value));
 document.addEventListener('click', e=>{ if(!$('#sgBox').contains(e.target) && e.target!==$('#searchInput')) hideSG(); });
 $('#listAllBtn').onclick=()=>{ const el=$('#allList'); if(!STUDENTS.length){ alert('Aún no se cargan alumnos. Revisa acceso a la hoja Asistencia.'); return; } el.style.display = (el.style.display==='none' || !el.style.display) ? 'block' : 'none'; };
 $('#prevBtn').onclick=()=>{ if(CURRENT_INDEX<=0) return; openStudentByIndex(CURRENT_INDEX-1); };
 $('#nextBtn').onclick=()=>{ if(CURRENT_INDEX<0 || CURRENT_INDEX>=STUDENTS.length-1) return; openStudentByIndex(CURRENT_INDEX+1); };
-$('#backBtn')?.addEventListener('click',()=>{ $('#student-view').style.display='none'; window.scrollTo({top:0,behavior:'smooth'}); });
 
 /* ====== TEMA ====== */
 const themeBtn=$('#themeBtn');
@@ -847,7 +857,9 @@ function applyTheme(t){document.documentElement.setAttribute('data-theme', t); t
 applyTheme(localStorage.getItem('docente_theme')||'light');
 themeBtn.onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
 
-/* ====== Cargar alumno (PARCHE PRINCIPAL) ====== */
+/* ====== A PARTIR DE AQUÍ SIGUE LA PARTE 2/2 ====== */
+
+  /* ====== CARGA DE ALUMNO ====== */
 async function cargarAlumnoPorID(id){
   // Oculta vista mientras carga
   const sv = document.getElementById('student-view');
@@ -858,7 +870,7 @@ async function cargarAlumnoPorID(id){
   // Asegura links (opcional)
   try { await loadLinks(); } catch {}
 
-  // Asegura datos en memoria (usa DATA del init)
+  // Asegura datos en memoria (usa DATA cargada por init)
   try{
     if (!DATA.asis) DATA.asis = await loadBlock('asistencia');
     if (!DATA.reg)  DATA.reg  = await loadBlock('registro');
@@ -961,7 +973,21 @@ async function cargarAlumnoPorID(id){
   window.scrollTo({ top: document.body.offsetTop, behavior:'smooth' });
 }
 
-/* ====== START ====== */
+/* ====== HANDLERS PENDIENTES ====== */
+$('#openBtn').onclick=()=>{
+  const q=$('#searchInput').value.trim();
+  if(!q){ alert('Escribe nombre o ID.'); return; }
+  const m=q.toUpperCase().match(/^ID[A-Z0-9]{6,}$/);
+  if(m){ openById(m[0]); return; }
+  const t=norm(q);
+  let hit = STUDENTS.find(s => norm(s.nombre)===t);
+  if(!hit) hit = STUDENTS.find(s => norm(s.nombre).includes(t));
+  if(!hit){ alert('No hallé ese alumno. Prueba otra parte del nombre o pega el ID.'); return; }
+  openById(hit.id);
+};
+$('#backBtn')?.addEventListener('click',()=>{ $('#student-view').style.display='none'; window.scrollTo({top:0,behavior:'smooth'}); });
+
+/* ====== START (init) ====== */
 (async function init(){
   await loadLinks();
   try{
@@ -973,6 +999,7 @@ async function cargarAlumnoPorID(id){
     const [reg, pre] = await Promise.all([loadBlock('registro'), loadBlock('presets')]);
     DATA.reg = reg; DATA.pre = pre;
 
+    // Inicializa TOPS
     refreshTops(asis, parseRegistro(reg.cols, reg.rows), parsePresets(pre.cols, pre.rows));
     $('#tops-card').style.display='block';
   }catch(e){ console.warn('No se pudo leer datos', e); }
@@ -987,6 +1014,8 @@ $('#recalcTopsBtn').onclick = ()=>{
     refreshTops(DATA.asis, parseRegistro(DATA.reg.cols, DATA.reg.rows), parsePresets(DATA.pre.cols, DATA.pre.rows));
   }
 };
+
 </script>
+<!-- ====== FIN PARTE 1/2 ====== -->
 </body>
 </html>
